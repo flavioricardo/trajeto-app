@@ -28,7 +28,7 @@ function Header() {
   return (
     <header className="header">
       <Contours />
-      <h1 className="brand">Tra<em>ç</em>o</h1>
+      <h1 className="brand">Traje<em>t</em>o</h1>
       <p className="tagline">Sua rota vira overlay pro story. Sem login, sem conta, grátis.</p>
     </header>
   )
@@ -116,7 +116,7 @@ function ExportBar() {
     try {
       const size = PRESETS[preset]
       const blob = await renderOverlay({ elements, route, routeBox, style }, size)
-      const file = new File([blob], `traco-${preset}.png`, { type: 'image/png' })
+      const file = new File([blob], `trajeto-${preset}.png`, { type: 'image/png' })
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file] }).catch(() => {})
       } else {

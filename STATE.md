@@ -1,11 +1,11 @@
-# STATE — Traço (traco-app)
+# STATE — Trajeto (trajeto-app)
 
 **Última sessão:** 2026-07-23 (session 2)
 
 ## Estado atual
 
 - MVP implementado e verificado: 12 testes Vitest+RTL passando, `tsc --noEmit` limpo, `vite build` ok (54,7 kB gzip).
-- Nome do produto decidido: **Traço** (loop de decisão PM, session 2).
+- Nome do produto: **Trajeto** (renomeado de Traço a pedido do Flávio, session 2).
 - Spec: `docs/superpowers/specs/2026-07-23-strava-overlay-design.md`
 - Plano: `docs/superpowers/plans/2026-07-23-traco-mvp.md`
 
@@ -21,7 +21,7 @@
 
 - [x] Revisar spec de design — resolvido 2026-07-23 (aprovação delegada, session 2)
 - [x] Definir nome do produto — resolvido 2026-07-23: Traço (session 2)
-- [ ] Criar repo GitHub `traco-app` e dar push — https://github.com/new
+- [ ] Criar repo GitHub `trajeto-app` e dar push — https://github.com/new
       | Blocks: deploy e histórico remoto | Open since: 2026-07-23 (session 2)
 - [ ] Importar na Vercel e deployar — https://vercel.com/new
       | Blocks: URL pública | Open since: 2026-07-23 (session 2)
