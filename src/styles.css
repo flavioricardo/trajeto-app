@@ -1,0 +1,242 @@
+/* Traço — direção visual: mapa topográfico.
+   Tokens: papel-névoa, tinta verde-escura, laranja-sinal, curvas de nível. */
+:root {
+  --paper: #edefec;
+  --ink: #17201b;
+  --accent: #ff4d12;
+  --contour: #c9cfc7;
+  --moss: #5e6b5f;
+  --card: #ffffff;
+  --radius: 14px;
+  font-family: 'Archivo', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: calc(84px + env(safe-area-inset-bottom));
+}
+
+/* ---------- header: assinatura topográfica ---------- */
+.header {
+  position: relative;
+  padding: 20px 16px 14px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--contour);
+}
+.header svg.contours {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.55;
+  pointer-events: none;
+}
+.brand {
+  position: relative;
+  font-family: 'Archivo Black', sans-serif;
+  font-size: 26px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.brand em { font-style: normal; color: var(--accent); }
+.tagline {
+  position: relative;
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--moss);
+}
+
+.app { max-width: 560px; margin: 0 auto; padding: 0 12px; }
+
+/* ---------- editor ---------- */
+.canvas-wrap { margin: 14px 0 10px; }
+.editor {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius);
+  overflow: hidden;
+  touch-action: none;
+  border: 1px solid var(--contour);
+  /* xadrez = transparência */
+  background:
+    repeating-conic-gradient(#e2e5e1 0% 25%, #f6f7f5 0% 50%) 0 0 / 22px 22px;
+  box-shadow: 0 6px 24px rgb(23 32 27 / 0.08);
+  container-type: inline-size;
+}
+.editor.story { aspect-ratio: 9 / 16; }
+.editor.feed { aspect-ratio: 1 / 1; }
+
+.draggable { position: absolute; cursor: grab; user-select: none; }
+.draggable:active { cursor: grabbing; }
+.draggable:focus-visible { outline: 2px dashed var(--accent); outline-offset: 4px; }
+
+.route-box { touch-action: none; }
+.route-box svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.route-box .resize {
+  position: absolute;
+  right: -8px;
+  bottom: -8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--paper);
+  border: 2px solid var(--paper);
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  touch-action: none;
+}
+
+/* rota se desenha sozinha ao entrar */
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.route-path { animation: draw 1.4s ease-out forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .route-path { animation: none; stroke-dashoffset: 0 !important; }
+}
+
+.stat { line-height: 1.15; }
+.stat .label { display: block; opacity: 0.85; }
+.stat .value { display: block; font-weight: 700; }
+.stat [contenteditable] { outline: none; min-width: 2ch; }
+.stat [contenteditable]:focus { border-bottom: 1px dashed currentColor; }
+.stat .remove {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 12px;
+  line-height: 1;
+  display: none;
+}
+.stat:focus-within .remove, .stat:hover .remove { display: block; }
+
+.editor-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: var(--moss);
+  font-size: 14px;
+  padding: 24px;
+}
+
+/* ---------- painéis ---------- */
+.card {
+  background: var(--card);
+  border: 1px solid var(--contour);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin: 10px 0;
+}
+.card h2 {
+  margin: 0 0 10px;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--moss);
+}
+
+.tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+.tabs button {
+  flex: 1;
+  padding: 9px 8px;
+  border: 1px solid var(--contour);
+  background: transparent;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink);
+}
+.tabs button[aria-selected='true'] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+.field { margin: 10px 0; }
+.field label { display: block; font-size: 13px; margin-bottom: 4px; color: var(--moss); }
+input[type='text'], input[type='search'] {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--contour);
+  border-radius: 10px;
+  font: inherit;
+  background: var(--paper);
+}
+input[type='file'] { font-size: 13px; }
+.suggest { list-style: none; margin: 4px 0 0; padding: 0; border: 1px solid var(--contour); border-radius: 10px; overflow: hidden; }
+.suggest li button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border: none;
+  background: var(--card);
+  font: inherit;
+  font-size: 13px;
+}
+.suggest li + li button { border-top: 1px solid var(--contour); }
+
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.row > .field { flex: 1; min-width: 120px; margin: 0; }
+
+input[type='color'] {
+  width: 44px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--contour);
+  border-radius: 8px;
+  background: none;
+}
+select, input[type='range'] { font: inherit; }
+select { padding: 9px 10px; border-radius: 10px; border: 1px solid var(--contour); background: var(--paper); width: 100%; }
+
+.btn {
+  font: inherit;
+  font-weight: 600;
+  padding: 11px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+}
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn:disabled { opacity: 0.5; }
+
+.error { color: #b3261e; font-size: 13px; margin: 8px 0 0; }
+.hint { color: var(--moss); font-size: 12px; margin: 6px 0 0; }
+
+/* ---------- barra fixa de export ---------- */
+.export-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--contour);
+}
+.preset-toggle { display: flex; gap: 4px; }
+.preset-toggle button {
+  font: inherit;
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--contour);
+  background: transparent;
+}
+.preset-toggle button[aria-pressed='true'] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
