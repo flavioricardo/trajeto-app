@@ -24,7 +24,8 @@
 - [x] Criar repo GitHub `trajeto-app` e dar push — resolvido 2026-07-23 (session 2)
 - [ ] REVOGAR token PAT `trajeto-push` — https://github.com/settings/personal-access-tokens
       | Blocks: segurança — token com write vive no histórico do chat | Open since: 2026-07-23 (session 2)
-- [ ] Importar na Vercel e deployar — https://vercel.com/new
-      | Blocks: URL pública | Open since: 2026-07-23 (session 2)
-- [ ] Testar drag/export em celular real (touch + salvar na galeria via share sheet) — abrir preview no celular
-      | Blocks: validação mobile-first | Open since: 2026-07-23 (session 2)
+- [x] Deploy Vercel — resolvido 2026-07-23 via MCP `deploy_to_vercel`, build ok (session 2)
+- [ ] Desligar Deployment Protection (URL pública retorna 403) — https://vercel.com/flavioricardo91/trajeto-app/settings/deployment-protection → Vercel Authentication → Disabled
+      | Blocks: acesso público ao app | Open since: 2026-07-23 (session 2)
+- [ ] Conectar repo GitHub ao projeto Vercel (deploy foi por upload direto, push não dispara build) — https://vercel.com/flavioricardo91/trajeto-app/settings/git
+      | Blocks: CI/CD por push; aproveitar e testar app no celular após protection off | Open since: 2026-07-23 (session 2)
