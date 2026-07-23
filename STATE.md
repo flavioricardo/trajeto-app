@@ -21,8 +21,9 @@
 
 - [x] Revisar spec de design — resolvido 2026-07-23 (aprovação delegada, session 2)
 - [x] Definir nome do produto — resolvido 2026-07-23: Traço (session 2)
-- [ ] Criar repo GitHub `trajeto-app` e dar push — https://github.com/new
-      | Blocks: deploy e histórico remoto | Open since: 2026-07-23 (session 2)
+- [x] Criar repo GitHub `trajeto-app` e dar push — resolvido 2026-07-23 (session 2)
+- [ ] REVOGAR token PAT `trajeto-push` — https://github.com/settings/personal-access-tokens
+      | Blocks: segurança — token com write vive no histórico do chat | Open since: 2026-07-23 (session 2)
 - [ ] Importar na Vercel e deployar — https://vercel.com/new
       | Blocks: URL pública | Open since: 2026-07-23 (session 2)
 - [ ] Testar drag/export em celular real (touch + salvar na galeria via share sheet) — abrir preview no celular
