@@ -1,6 +1,6 @@
 # STATE — Trajeto (trajeto-app)
 
-**Última sessão:** 2026-07-24 (session 3)
+**Última sessão:** 2026-07-24 (session 3, cont.)
 
 ## Estado atual
 
@@ -15,6 +15,7 @@
 - Tab "Formas": 7 formas pré-definidas (coração, estrela, círculo, raio, tênis, joinha, deslike) como polylines 0-1 em `src/lib/shapes.ts`.
 - Xadrez do editor escurecido (#a9afa9/#c3c8c2) pra leitura de stats claros.
 - 17 testes. Redeploy produção via MCP: dpl_9bBBoE4kv5GvG47VAWG8qyLhjqiw.
+- Fix drag de stats: pointer capture no bloco (currentTarget), stopPropagation removido dos spans editáveis. Ícones SVG inline (icons.tsx). Copy revisada com humanizer (sem travessões na UI, sem rule-of-three, Wikiloc citado como fonte de GPX). Wikiloc: sem API pública e ToS proíbe re-hospedagem; caminho oficial é download manual do GPX. Redeploy: dpl_9Nr62tGpsw4xhUpdqkCHaz5uqUYJ.
 
 ## Decisões de arquitetura
 
