@@ -7,9 +7,9 @@ const renderApp = () => render(<Provider><App /></Provider>)
 it('adiciona e remove StatBlock', () => {
   renderApp()
   const before = screen.getAllByRole('button', { name: /Remover/ }).length
-  fireEvent.click(screen.getByRole('button', { name: /Adicionar stat/ }))
+  fireEvent.click(screen.getByRole('button', { name: /Adicionar dado/ }))
   expect(screen.getAllByRole('button', { name: /Remover/ })).toHaveLength(before + 1)
-  fireEvent.click(screen.getAllByRole('button', { name: /Adicionar stat/ })[0])
+  fireEvent.click(screen.getAllByRole('button', { name: /Adicionar dado/ })[0])
   fireEvent.click(screen.getAllByRole('button', { name: /Remover/ })[0])
   expect(screen.getAllByRole('button', { name: /Remover/ })).toHaveLength(before + 1)
 })

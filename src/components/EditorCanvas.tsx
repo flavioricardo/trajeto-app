@@ -66,7 +66,7 @@ function RouteBoxEl({ containerRef }: { containerRef: React.RefObject<HTMLDivEle
         onPointerDown={e => { e.stopPropagation(); resize.onPointerDown(e) }}
         onPointerMove={resize.onPointerMove}
         onPointerUp={resize.onPointerUp}
-      ><IconResize size={13} /></span>
+      ><IconResize size={13} strokeWidth={2.4} /></span>
     </div>
   )
 }
@@ -106,7 +106,7 @@ function StatBlock({ el, containerRef }: { el: StatElement; containerRef: React.
         aria-label={`Remover ${el.label}`}
         onPointerDown={e => e.stopPropagation()}
         onClick={() => setElements(els => els.filter(e => e.id !== el.id))}
-      ><IconX size={11} /></button>
+      ><IconX size={11} strokeWidth={2.6} /></button>
     </div>
   )
 }

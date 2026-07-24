@@ -60,7 +60,7 @@ function StatsPanel() {
       <h2>Estatísticas</h2>
       <p className="hint">Toque no texto pra editar. Arraste no quadro pra posicionar.</p>
       <div className="row" style={{ marginTop: 10 }}>
-        <button className="btn" onClick={() => setElements(els => [...els, newStat('Título', 'valor')])}><IconPlus size={14} /> Adicionar stat</button>
+        <button className="btn" onClick={() => setElements(els => [...els, newStat('Título', 'valor')])}><IconPlus size={14} /> Adicionar dado</button>
         {elements.length > 0 && (
           <button className="btn" onClick={() => setElements([])}>Limpar tudo</button>
         )}
