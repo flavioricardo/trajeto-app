@@ -1,6 +1,6 @@
 # STATE — Trajeto (trajeto-app)
 
-**Última sessão:** 2026-07-23 (session 2)
+**Última sessão:** 2026-07-24 (session 3)
 
 ## Estado atual
 
@@ -8,6 +8,13 @@
 - Nome do produto: **Trajeto** (renomeado de Traço a pedido do Flávio, session 2).
 - Spec: `docs/superpowers/specs/2026-07-23-strava-overlay-design.md`
 - Plano: `docs/superpowers/plans/2026-07-23-traco-mvp.md`
+
+## Sessão 3 (2026-07-24)
+
+- Tab "Local" restaurada do jeito certo: Nominatim `polygon_geojson=1` devolve geometria do lugar (trilha LineString, praça Polygon) → vira traçado; distância pré-preenchida quando linear. Correção da decisão da session 2 que colapsou "Buscar local" em A→B.
+- Tab "Formas": 7 formas pré-definidas (coração, estrela, círculo, raio, tênis, joinha, deslike) como polylines 0-1 em `src/lib/shapes.ts`.
+- Xadrez do editor escurecido (#a9afa9/#c3c8c2) pra leitura de stats claros.
+- 17 testes. Redeploy produção via MCP: dpl_9bBBoE4kv5GvG47VAWG8qyLhjqiw.
 
 ## Decisões de arquitetura
 
