@@ -59,11 +59,11 @@ function GpxTab() {
   return (
     <div>
       <div className="field">
-        <label htmlFor="gpx">No Strava: atividade → ⋯ → Exportar GPX</label>
+        <label htmlFor="gpx">Arquivo GPX da atividade</label>
         <input id="gpx" type="file" accept=".gpx,application/gpx+xml" onChange={e => onFile(e.target.files?.[0])} />
       </div>
       {error && <p className="error" role="alert">{error}. Tente o modo "Início e fim".</p>}
-      <p className="hint">Distância, tempo, elevação e pace entram sozinhos — edite à vontade.</p>
+      <p className="hint">No Strava: atividade, menu, Exportar GPX. No Wikiloc: botão Download, Arquivo GPX. Distância, tempo, elevação e pace entram sozinhos.</p>
     </div>
   )
 }
@@ -117,7 +117,7 @@ function PlaceTab() {
   const onPick = (p: Place) => {
     setError('')
     if (!p.shape || p.shape.length < 3) {
-      setError('Esse lugar não tem traçado mapeado no OpenStreetMap')
+      setError('Esse lugar ainda não tem traçado no OpenStreetMap')
       return
     }
     setRoute(normalizePoints(p.shape))
@@ -127,8 +127,8 @@ function PlaceTab() {
   return (
     <div>
       <PlaceInput label="Trilha, praça, pista, parque…" onPick={onPick} />
-      {error && <p className="error" role="alert">{error}. Tente um GPX da atividade.</p>}
-      <p className="hint">A busca usa o OpenStreetMap — trilhas e praças mapeadas viram traçado automático.</p>
+      {error && <p className="error" role="alert">{error}. Baixe o GPX da trilha no Wikiloc ou no Strava e use a aba GPX.</p>}
+      <p className="hint">Busca no OpenStreetMap. Trilhas, praças e pistas mapeadas viram traçado na hora.</p>
     </div>
   )
 }
@@ -142,7 +142,7 @@ function ShapesTab() {
           <button key={name} className="btn" onClick={() => setRoute(pts)}>{name}</button>
         ))}
       </div>
-      <p className="hint">Forma entra no lugar da rota — mesma cor e espessura do traço.</p>
+      <p className="hint">A forma usa a mesma cor e espessura da rota.</p>
     </div>
   )
 }
@@ -177,7 +177,7 @@ function AbTab() {
       <button className="btn" disabled={!a || !b || busy} onClick={go}>
         {busy ? 'Traçando…' : 'Traçar rota'}
       </button>
-      {error && <p className="error" role="alert">{error}. Sem sinal do serviço de rotas? Use um arquivo GPX.</p>}
+      {error && <p className="error" role="alert">{error}. Se o serviço estiver fora do ar, use um arquivo GPX.</p>}
     </div>
   )
 }

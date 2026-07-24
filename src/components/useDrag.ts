@@ -12,7 +12,7 @@ export function useDrag(
 
   return {
     onPointerDown(e: React.PointerEvent) {
-      ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
+      ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
       last.current = { x: e.clientX, y: e.clientY }
     },
     onPointerMove(e: React.PointerEvent) {

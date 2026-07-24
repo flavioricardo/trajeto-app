@@ -103,7 +103,7 @@ body {
 .stat .label { display: block; opacity: 0.85; }
 .stat .value { display: block; font-weight: 700; }
 .stat [contenteditable] { outline: none; min-width: 2ch; }
-.stat [contenteditable]:focus { border-bottom: 1px dashed currentColor; }
+.stat [contenteditable]:focus { border-bottom: 1px dashed currentColor; user-select: text; }
 .stat .remove {
   position: absolute;
   top: -12px;
@@ -199,6 +199,10 @@ select, input[type='range'] { font: inherit; }
 select { padding: 9px 10px; border-radius: 10px; border: 1px solid var(--contour); background: var(--paper); width: 100%; }
 
 .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   font: inherit;
   font-weight: 600;
   padding: 11px 16px;

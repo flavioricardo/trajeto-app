@@ -8,6 +8,7 @@ import {
 } from '../state'
 import { OVERLAY_FONTS, OverlayFont } from '../fonts'
 import { renderOverlay } from '../lib/export'
+import { IconPlus, IconDownload } from './icons'
 
 export default function App() {
   return (
@@ -29,7 +30,7 @@ function Header() {
     <header className="header">
       <Contours />
       <h1 className="brand">Traje<em>t</em>o</h1>
-      <p className="tagline">Sua rota vira overlay pro story. Sem login, sem conta, grátis.</p>
+      <p className="tagline">Sua rota vira overlay transparente pro story. Grátis e sem cadastro.</p>
     </header>
   )
 }
@@ -57,11 +58,9 @@ function StatsPanel() {
   return (
     <section className="card">
       <h2>Estatísticas</h2>
-      <p className="hint">Toque no texto pra editar, arraste no quadro pra posicionar.</p>
+      <p className="hint">Toque no texto pra editar. Arraste no quadro pra posicionar.</p>
       <div className="row" style={{ marginTop: 10 }}>
-        <button className="btn" onClick={() => setElements(els => [...els, newStat('Título', 'valor')])}>
-          + Adicionar stat
-        </button>
+        <button className="btn" onClick={() => setElements(els => [...els, newStat('Título', 'valor')])}><IconPlus size={14} /> Adicionar stat</button>
         {elements.length > 0 && (
           <button className="btn" onClick={() => setElements([])}>Limpar tudo</button>
         )}
@@ -140,7 +139,7 @@ function ExportBar() {
         ))}
       </div>
       <button className="btn primary" disabled={busy || (elements.length === 0 && !route)} onClick={doExport}>
-        {busy ? 'Gerando…' : 'Salvar PNG'}
+        {busy ? 'Gerando…' : <><IconDownload size={15} /> Salvar PNG</>}
       </button>
     </div>
   )

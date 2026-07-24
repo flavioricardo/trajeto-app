@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 import { presetAtom, routeAtom, routeBoxAtom, elementsAtom, styleAtom, StatElement } from '../state'
 import { useDrag, clamp } from './useDrag'
+import { IconResize, IconX } from './icons'
 
 export default function EditorCanvas() {
   const preset = useAtomValue(presetAtom)
@@ -17,7 +18,7 @@ export default function EditorCanvas() {
           <StatBlock key={el.id} el={el} containerRef={ref} />
         ))}
         {!route && elements.length === 0 && (
-          <p className="editor-empty">Carregue um GPX ou monte a rota abaixo. Arraste tudo pra posicionar.</p>
+          <p className="editor-empty">Escolha a rota nas abas abaixo. Depois arraste cada item pra posicionar.</p>
         )}
       </div>
     </div>
@@ -40,7 +41,7 @@ function RouteBoxEl({ containerRef }: { containerRef: React.RefObject<HTMLDivEle
       className="draggable route-box"
       style={{ left: `${box.x}%`, top: `${box.y}%`, width: `${box.size}%`, aspectRatio: '1' }}
       tabIndex={0}
-      aria-label="Rota — arraste pra mover"
+      aria-label="Rota. Arraste pra mover"
       {...drag}
     >
       <svg viewBox="0 0 100 100">
@@ -65,7 +66,7 @@ function RouteBoxEl({ containerRef }: { containerRef: React.RefObject<HTMLDivEle
         onPointerDown={e => { e.stopPropagation(); resize.onPointerDown(e) }}
         onPointerMove={resize.onPointerMove}
         onPointerUp={resize.onPointerUp}
-      >⤡</span>
+      ><IconResize size={13} /></span>
     </div>
   )
 }
@@ -92,7 +93,6 @@ function StatBlock({ el, containerRef }: { el: StatElement; containerRef: React.
         contentEditable
         suppressContentEditableWarning
         onBlur={e => update({ label: e.currentTarget.textContent ?? '' })}
-        onPointerDown={e => e.stopPropagation()}
       >{el.label}</span>
       <span
         className="value"
@@ -100,14 +100,13 @@ function StatBlock({ el, containerRef }: { el: StatElement; containerRef: React.
         contentEditable
         suppressContentEditableWarning
         onBlur={e => update({ value: e.currentTarget.textContent ?? '' })}
-        onPointerDown={e => e.stopPropagation()}
       >{el.value}</span>
       <button
         className="remove"
         aria-label={`Remover ${el.label}`}
         onPointerDown={e => e.stopPropagation()}
         onClick={() => setElements(els => els.filter(e => e.id !== el.id))}
-      >×</button>
+      ><IconX size={11} /></button>
     </div>
   )
 }

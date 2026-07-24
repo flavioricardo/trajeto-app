@@ -52,5 +52,5 @@ export const SHAPES: Record<string, Pt[]> = {
   'Raio': bolt,
   'Tênis': shoe,
   'Joinha': thumbUp,
-  'Deslike': thumbDown,
+  'Não curti': thumbDown,
 }
