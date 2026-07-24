@@ -2,20 +2,26 @@ import { useEffect, useRef, useState } from 'react'
 import { useAtom, useSetAtom } from 'jotai'
 import { routeAtom, elementsAtom, newStat } from '../state'
 import { parseGpx, GpxStats } from '../lib/gpx'
-import { normalizePoints, LatLon } from '../lib/geo'
+import { SHAPES } from '../lib/shapes'
+import { normalizePoints, totalDistance, LatLon } from '../lib/geo'
 import { searchPlaces, fetchRoute, Place } from '../lib/api'
 import { formatDistance, formatDuration, formatPace } from '../lib/format'
 
 export default function RouteSource() {
-  const [tab, setTab] = useState<'gpx' | 'ab'>('gpx')
+  const [tab, setTab] = useState<'gpx' | 'place' | 'ab' | 'shapes'>('gpx')
+  const tabs = [['gpx', 'GPX'], ['place', 'Local'], ['ab', 'A → B'], ['shapes', 'Formas']] as const
   return (
     <section className="card">
       <h2>Rota</h2>
       <div className="tabs" role="tablist">
-        <button role="tab" aria-selected={tab === 'gpx'} onClick={() => setTab('gpx')}>Arquivo GPX</button>
-        <button role="tab" aria-selected={tab === 'ab'} onClick={() => setTab('ab')}>Início e fim</button>
+        {tabs.map(([id, label]) => (
+          <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}>{label}</button>
+        ))}
       </div>
-      {tab === 'gpx' ? <GpxTab /> : <AbTab />}
+      {tab === 'gpx' && <GpxTab />}
+      {tab === 'place' && <PlaceTab />}
+      {tab === 'ab' && <AbTab />}
+      {tab === 'shapes' && <ShapesTab />}
     </section>
   )
 }
@@ -99,6 +105,44 @@ function PlaceInput({ label, onPick }: { label: string; onPick: (p: Place) => vo
           ))}
         </ul>
       )}
+    </div>
+  )
+}
+
+function PlaceTab() {
+  const setRoute = useSetAtom(routeAtom)
+  const prefill = usePrefillStats()
+  const [error, setError] = useState('')
+
+  const onPick = (p: Place) => {
+    setError('')
+    if (!p.shape || p.shape.length < 3) {
+      setError('Esse lugar não tem traçado mapeado no OpenStreetMap')
+      return
+    }
+    setRoute(normalizePoints(p.shape))
+    if (p.linear) prefill({ distanceM: totalDistance(p.shape) })
+  }
+
+  return (
+    <div>
+      <PlaceInput label="Trilha, praça, pista, parque…" onPick={onPick} />
+      {error && <p className="error" role="alert">{error}. Tente um GPX da atividade.</p>}
+      <p className="hint">A busca usa o OpenStreetMap — trilhas e praças mapeadas viram traçado automático.</p>
+    </div>
+  )
+}
+
+function ShapesTab() {
+  const setRoute = useSetAtom(routeAtom)
+  return (
+    <div>
+      <div className="shape-grid">
+        {Object.entries(SHAPES).map(([name, pts]) => (
+          <button key={name} className="btn" onClick={() => setRoute(pts)}>{name}</button>
+        ))}
+      </div>
+      <p className="hint">Forma entra no lugar da rota — mesma cor e espessura do traço.</p>
     </div>
   )
 }

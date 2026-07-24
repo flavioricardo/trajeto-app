@@ -63,7 +63,7 @@ body {
   border: 1px solid var(--contour);
   /* xadrez = transparência */
   background:
-    repeating-conic-gradient(#e2e5e1 0% 25%, #f6f7f5 0% 50%) 0 0 / 22px 22px;
+    repeating-conic-gradient(#a9afa9 0% 25%, #c3c8c2 0% 50%) 0 0 / 22px 22px;
   box-shadow: 0 6px 24px rgb(23 32 27 / 0.08);
   container-type: inline-size;
 }
@@ -209,6 +209,9 @@ select { padding: 9px 10px; border-radius: 10px; border: 1px solid var(--contour
 }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 .btn:disabled { opacity: 0.5; }
+
+.shape-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.shape-grid .btn { padding: 10px 6px; font-size: 13px; }
 
 .error { color: #b3261e; font-size: 13px; margin: 8px 0 0; }
 .hint { color: var(--moss); font-size: 12px; margin: 6px 0 0; }
