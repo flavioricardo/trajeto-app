@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 import EditorCanvas from './EditorCanvas'
 import RouteSource from './RouteSource'
+import StravaPanel from './StravaPanel'
 import {
   presetAtom, PRESETS, Preset, styleAtom, elementsAtom, newStat,
   routeAtom, routeBoxAtom,
@@ -16,6 +17,7 @@ export default function App() {
       <Header />
       <main className="app">
         <EditorCanvas />
+        <StravaPanel />
         <RouteSource />
         <StatsPanel />
         <StylePanel />

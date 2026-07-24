@@ -26,6 +26,12 @@
 - Design: direção topográfica (papel #EDEFEC, tinta #17201B, laranja #FF4D12), fontes de overlay: Archivo Black, Bebas Neue, Space Mono, Lora, Caveat. Assinatura: curvas de nível no header + rota se desenhando (respeita prefers-reduced-motion).
 - ponytail: debounce 800ms cobre rate limit Nominatim; fila de requisições só se precisar.
 
+## Sessão 4 (2026-07-24)
+
+- OAuth Strava implementado (plano em docs/superpowers/plans/2026-07-24-strava-oauth.md): StravaPanel acima de Rota; importa atividade por link (confirmação via window.confirm), lista rotas salvas, busca segmentos por região (Nominatim → bounds → segments/explore). Browser fala direto com api.strava.com (CORS ok); serverless só em /api/strava-token (secret) e /api/strava-config (clientId em runtime, sem rebuild). Token em localStorage com refresh automático.
+- Ícones migrados pra lucide-react. Botão "Adicionar dado". 19 testes.
+- Limitação documentada: rotas sugeridas "Made for you" não vêm na API; usuário salva a rota no app do Strava e ela aparece em "Minhas rotas".
+
 ## Pendências
 
 - [x] Revisar spec de design — resolvido 2026-07-23 (aprovação delegada, session 2)
@@ -34,7 +40,7 @@
 - [ ] REVOGAR token PAT `trajeto-push` — https://github.com/settings/personal-access-tokens
       | Blocks: segurança — token com write vive no histórico do chat | Open since: 2026-07-23 (session 2)
 - [x] Deploy Vercel — resolvido 2026-07-23 via MCP `deploy_to_vercel`, build ok (session 2)
-- [ ] Desligar Deployment Protection (URL pública retorna 403) — https://vercel.com/flavioricardo91/trajeto-app/settings/deployment-protection → Vercel Authentication → Disabled
-      | Blocks: acesso público ao app | Open since: 2026-07-23 (session 2)
-- [ ] Conectar repo GitHub ao projeto Vercel (deploy foi por upload direto, push não dispara build) — https://vercel.com/flavioricardo91/trajeto-app/settings/git
-      | Blocks: CI/CD por push; aproveitar e testar app no celular após protection off | Open since: 2026-07-23 (session 2)
+- [ ] Configurar projeto na Vercel: desligar Deployment Protection E conectar o repo GitHub — https://vercel.com/flavioricardo91/trajeto-app/settings
+      | Blocks: acesso público (403) e CI/CD por push | Open since: 2026-07-23 (session 2)
+- [ ] Registrar app no Strava e configurar env vars — https://www.strava.com/settings/api (Authorization Callback Domain: trajeto-app-flavioricardo91.vercel.app), depois STRAVA_CLIENT_ID e STRAVA_CLIENT_SECRET em https://vercel.com/flavioricardo91/trajeto-app/settings/environment-variables
+      | Blocks: botão Conectar com Strava funcionar | Open since: 2026-07-24 (session 4)

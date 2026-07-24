@@ -212,6 +212,8 @@ select { padding: 9px 10px; border-radius: 10px; border: 1px solid var(--contour
   color: var(--ink);
 }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+/* Botão de conexão segue a cor oficial do Strava (exigência das brand guidelines) */
+.btn.strava { background: #fc4c02; border-color: #fc4c02; color: #fff; }
 .btn:disabled { opacity: 0.5; }
 
 .shape-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }

@@ -1,0 +1,197 @@
+import { useEffect, useState } from 'react'
+import { useSetAtom } from 'jotai'
+import { routeAtom, elementsAtom, newStat } from '../state'
+import { normalizePoints } from '../lib/geo'
+import { formatDistance, formatDuration, formatPace } from '../lib/format'
+import {
+  StravaToken, ImportResult, parseActivityUrl, getActivity, listRoutes, exploreSegments,
+} from '../lib/strava'
+import { searchPlaces, Place } from '../lib/api'
+
+const STORAGE_KEY = 'trajeto_strava'
+
+function loadToken(): StravaToken | null {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null') } catch { return null }
+}
+function saveToken(t: StravaToken | null) {
+  if (t) localStorage.setItem(STORAGE_KEY, JSON.stringify(t))
+  else localStorage.removeItem(STORAGE_KEY)
+}
+
+async function tokenRequest(body: object): Promise<StravaToken> {
+  const res = await fetch('/api/strava-token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) throw new Error('Falha na autenticação com o Strava')
+  const data = await res.json()
+  if (!data.access_token) throw new Error('Falha na autenticação com o Strava')
+  return { ...loadToken(), ...data }
+}
+
+export default function StravaPanel() {
+  const [token, setToken] = useState<StravaToken | null>(loadToken)
+  const [error, setError] = useState('')
+
+  // Callback do OAuth: ?code= na URL
+  useEffect(() => {
+    const code = new URLSearchParams(location.search).get('code')
+    if (!code) return
+    history.replaceState(null, '', location.pathname)
+    tokenRequest({ code })
+      .then(t => { saveToken(t); setToken(t) })
+      .catch(e => setError(e.message))
+  }, [])
+
+  const connect = async () => {
+    setError('')
+    try {
+      const { clientId } = await (await fetch('/api/strava-config')).json()
+      if (!clientId) throw new Error('Integração com o Strava ainda não configurada neste servidor')
+      const params = new URLSearchParams({
+        client_id: clientId,
+        redirect_uri: location.origin + location.pathname,
+        response_type: 'code',
+        scope: 'read,activity:read',
+        approval_prompt: 'auto',
+      })
+      location.href = `https://www.strava.com/oauth/authorize?${params}`
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Falha ao iniciar conexão')
+    }
+  }
+
+  const disconnect = () => { saveToken(null); setToken(null) }
+
+  /** Devolve access_token válido, renovando se expirou. */
+  const freshToken = async (): Promise<string> => {
+    if (!token) throw new Error('Conecte com o Strava primeiro')
+    if (token.expires_at * 1000 > Date.now() + 60_000) return token.access_token
+    const t = await tokenRequest({ refresh_token: token.refresh_token })
+    saveToken(t); setToken(t)
+    return t.access_token
+  }
+
+  if (!token) {
+    return (
+      <section className="card">
+        <h2>Strava</h2>
+        <p className="hint">Conecte pra importar suas atividades, rotas salvas e segmentos da comunidade.</p>
+        <button className="btn strava" style={{ marginTop: 10 }} onClick={connect}>Conectar com Strava</button>
+        {error && <p className="error" role="alert">{error}</p>}
+      </section>
+    )
+  }
+
+  return (
+    <section className="card">
+      <h2>Strava{token.athlete?.firstname ? ` · ${token.athlete.firstname}` : ''}</h2>
+      <Connected freshToken={freshToken} athleteId={token.athlete?.id} />
+      <button className="btn" style={{ marginTop: 10 }} onClick={disconnect}>Desconectar</button>
+    </section>
+  )
+}
+
+function useApplyImport() {
+  const setRoute = useSetAtom(routeAtom)
+  const setElements = useSetAtom(elementsAtom)
+  return (r: ImportResult): boolean => {
+    const km = formatDistance(r.distanceM)
+    const ok = window.confirm(`Importar "${r.name}" (${km})? Isso substitui a rota e os dados atuais do quadro.`)
+    if (!ok) return false
+    setRoute(normalizePoints(r.points))
+    const els = [newStat('Distância', km, 8, 56)]
+    if (r.durationS) els.push(newStat('Tempo', formatDuration(r.durationS), 8, 70))
+    if (r.gainM != null) els.push(newStat('Elevação', `${Math.round(r.gainM)} m`, 55, 56))
+    if (r.durationS) els.push(newStat('Pace', formatPace(r.distanceM, r.durationS), 55, 70))
+    setElements(els)
+    return true
+  }
+}
+
+function Connected({ freshToken, athleteId }: { freshToken: () => Promise<string>; athleteId?: number }) {
+  const apply = useApplyImport()
+  const [link, setLink] = useState('')
+  const [busy, setBusy] = useState('')
+  const [error, setError] = useState('')
+  const [options, setOptions] = useState<ImportResult[]>([])
+  const [optionsLabel, setOptionsLabel] = useState('')
+
+  const run = async (what: string, fn: () => Promise<void>) => {
+    setBusy(what); setError(''); setOptions([])
+    try { await fn() } catch (e) { setError(e instanceof Error ? e.message : 'Deu erro') } finally { setBusy('') }
+  }
+
+  const importLink = () => run('link', async () => {
+    const id = parseActivityUrl(link)
+    if (!id) throw new Error('Cole um link no formato strava.com/activities/…')
+    apply(await getActivity(id, await freshToken()))
+  })
+
+  const loadRoutes = () => run('routes', async () => {
+    if (!athleteId) throw new Error('Conta sem identificador. Conecte de novo')
+    const routes = await listRoutes(athleteId, await freshToken())
+    if (routes.length === 0) throw new Error('Nenhuma rota salva na sua conta')
+    setOptions(routes); setOptionsLabel('Minhas rotas')
+  })
+
+  const [segPlace, setSegPlace] = useState<Place | null>(null)
+  const [segQuery, setSegQuery] = useState('')
+  const findSegments = () => run('segments', async () => {
+    let place = segPlace
+    if (!place) {
+      const results = await searchPlaces(segQuery)
+      if (results.length === 0) throw new Error('Local não encontrado')
+      place = results[0]
+      setSegPlace(place)
+    }
+    const segs = await exploreSegments(place.lat, place.lon, await freshToken())
+    if (segs.length === 0) throw new Error('Nenhum segmento de corrida nessa região')
+    setOptions(segs); setOptionsLabel('Segmentos da região')
+  })
+
+  return (
+    <div>
+      <div className="field">
+        <label htmlFor="strava-link">Link da atividade</label>
+        <input id="strava-link" type="text" inputMode="url" value={link}
+          placeholder="https://www.strava.com/activities/…"
+          onChange={e => setLink(e.target.value)} />
+      </div>
+      <div className="row">
+        <button className="btn" disabled={!link || !!busy} onClick={importLink}>
+          {busy === 'link' ? 'Importando…' : 'Importar atividade'}
+        </button>
+        <button className="btn" disabled={!!busy} onClick={loadRoutes}>
+          {busy === 'routes' ? 'Buscando…' : 'Minhas rotas'}
+        </button>
+      </div>
+      <div className="field" style={{ marginTop: 12 }}>
+        <label htmlFor="seg-place">Segmentos perto de um local</label>
+        <div className="row">
+          <input id="seg-place" type="search" value={segQuery} placeholder="Ex.: Gruta do Janelão"
+            onChange={e => { setSegQuery(e.target.value); setSegPlace(null) }} style={{ flex: 1 }} />
+          <button className="btn" disabled={segQuery.length < 3 || !!busy} onClick={findSegments}>
+            {busy === 'segments' ? 'Buscando…' : 'Buscar'}
+          </button>
+        </div>
+      </div>
+      {options.length > 0 && (
+        <div className="field">
+          <label>{optionsLabel}</label>
+          <ul className="suggest">
+            {options.map((o, i) => (
+              <li key={i}>
+                <button onClick={() => { if (apply(o)) setOptions([]) }}>
+                  {o.name} · {formatDistance(o.distanceM)}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {error && <p className="error" role="alert">{error}</p>}
+    </div>
+  )
+}
