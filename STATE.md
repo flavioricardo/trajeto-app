@@ -32,6 +32,11 @@
 - Ícones migrados pra lucide-react. Botão "Adicionar dado". 19 testes.
 - Limitação documentada: rotas sugeridas "Made for you" não vêm na API; usuário salva a rota no app do Strava e ela aparece em "Minhas rotas".
 
+## Sessão 5 (2026-07-25)
+
+- Incidente de configuração: STRAVA_CLIENT_ID foi preenchido com o valor do client secret e o endpoint público o expunha (mitigado: Deployment Protection ativa limitou o vazamento a usuários autenticados no projeto; guard deployado — strava-config só devolve valor numérico). Secret também está no histórico do chat e NÃO foi rotacionado. Deploy do guard: dpl_6UrXHsJ1JACdoLwBZHRGNDAb1cZp.
+- Confirmado por SSO redirect: Deployment Protection segue ATIVA (app inacessível ao público).
+
 ## Pendências
 
 - [x] Revisar spec de design — resolvido 2026-07-23 (aprovação delegada, session 2)
