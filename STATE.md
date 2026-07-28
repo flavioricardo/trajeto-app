@@ -42,8 +42,8 @@
 - [x] Revisar spec de design — resolvido 2026-07-23 (aprovação delegada, session 2)
 - [x] Definir nome do produto — resolvido 2026-07-23: Traço (session 2)
 - [x] Criar repo GitHub `trajeto-app` e dar push — resolvido 2026-07-23 (session 2)
-- [ ] REVOGAR token PAT `trajeto-push` — https://github.com/settings/personal-access-tokens
-      | Blocks: segurança — token com write vive no histórico do chat | Open since: 2026-07-23 (session 2)
+- [ ] REVOGAR token PAT `trajeto-push` — ⚠️ **3+ sessões aberta, violando a regra das 2 sessões** — https://github.com/settings/personal-access-tokens
+      | Blocks: segurança — token com write vive no histórico do chat | Open since: 2026-07-23 (confirmada ainda aberta em 2026-07-28, session 6)
 - [x] Deploy Vercel — resolvido 2026-07-23 via MCP `deploy_to_vercel`, build ok (session 2)
 - [ ] Configurar projeto na Vercel: desligar Deployment Protection E conectar o repo GitHub — https://vercel.com/flavioricardo91/trajeto-app/settings
       | Blocks: acesso público (403) e CI/CD por push | Open since: 2026-07-23 (session 2)
