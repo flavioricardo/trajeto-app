@@ -25,7 +25,12 @@ export type RouteLayer = {
   dy?: number
   /** brilho ao redor, em % da largura do quadro */
   glow?: { paint: Paint; blur: number }
-  /** traço/lacuna alternados, em % da largura do quadro — é assim que a tinta corrói */
+  /**
+   * Traço/lacuna alternados que corroem a tinta, em **múltiplos da espessura
+   * da própria camada** — não em % do quadro. Precisa ser relativo: o usuário
+   * mexe na espessura, e um padrão fixo vira contas de colar quando a linha
+   * engrossa e some quando ela afina.
+   */
   dash?: number[]
   /** desloca o início do padrão, pra que as falhas de duas camadas não coincidam */
   dashOffset?: number
@@ -173,19 +178,23 @@ const FOFO: Theme = {
 // Carimbo de borracha: anéis em volta, tinta corroída e a impressão torta.
 // O padrão de traço é longo e irregular de propósito — um tracejado regular
 // leria como intenção, não como desgaste.
-const INK_BREAKS = [1.3, 0.26, 0.85, 0.2, 2.4, 0.32, 0.6, 0.22, 1.7, 0.28]
+// Múltiplos da espessura: trechos longos de tinta cortados por fendas curtas.
+// Trecho na ordem da própria espessura vira conta de colar, não rachadura.
+const INK_BREAKS = [3.5, 0.2, 2.2, 0.16, 6, 0.26, 1.5, 0.17, 4.4, 0.22]
 
 const CARIMBO: Theme = {
   id: 'carimbo',
   label: 'Carimbo',
   hint: 'Anéis, tinta corroída e a impressão batida torta.',
-  palette: { routeColor: '#A8231B', textColor: '#A8231B', font: 'Bebas Neue', strokeWidth: 1.5 },
+  palette: { routeColor: '#8E241D', textColor: '#8E241D', font: 'Rubik Doodle Shadow', strokeWidth: 2.4 },
   route: [
-    { paint: 'route', width: 1.25, opacity: 0.3, dx: 0.5, dy: 0.55, dash: INK_BREAKS, dashOffset: 0.9 },
-    { paint: 'route', width: 1, opacity: 0.92, dash: INK_BREAKS },
-    { paint: 'routeDark', width: 0.4, opacity: 0.3, dx: -0.15, dy: -0.15, dash: INK_BREAKS, dashOffset: 2.1 },
+    { paint: 'route', width: 1.15, opacity: 0.5, dx: 0.5, dy: 0.55, dash: INK_BREAKS, dashOffset: 0.9 },
+    { paint: 'route', width: 1, dash: INK_BREAKS },
+    { paint: 'routeDark', width: 0.38, opacity: 0.55, dx: -0.15, dy: -0.15, dash: INK_BREAKS, dashOffset: 2.1 },
   ],
-  text: { shadow: { paint: 'route', dx: 0.22, dy: 0.24, blur: 0.35 } },
+  // Sem sombra própria: a Rubik Doodle Shadow já traz a sombra no desenho da
+  // letra, e somar outra deixaria o texto sujo.
+  text: {},
   frame: [ring(0.49), ring(0.44)],
   contentScale: 0.62,
   rotate: -8,

@@ -94,7 +94,11 @@
 - O modelo de tema cresceu três campos pra isso: `dash`/`dashOffset` na camada (corrosão), e `frame` + `contentScale` + `rotate` no tema. `themedTrace()` monta o traçado final e é chamada **pelo editor e pelo export**, então moldura e encolhimento não têm como divergir.
 - Sobre o padrão de corrosão: começou grosso e leu como tracejado intencional. Carimbo real tem falha fina e frequente — o padrão atual é curto e irregular, e cada camada usa um `dashOffset` diferente pra que as falhas não coincidam.
 - A animação de desenhar a rota usa `dasharray`, então ela sai de cena quando o tema corrói a tinta (que também é `dasharray`). Conflito conhecido, não bug.
-- 69 testes, bundle 74,5 → 76,4 kB gzip.
+- **Sessão 9 (cont. 3):** Carimbo com **Rubik Doodle Shadow**, traço de 1,5 → 2,4 e paleta mais densa (`#8E241D`, camadas menos translúcidas). Sombra própria do texto removida: a fonte já traz sombra no desenho da letra, e somar outra sujava.
+- **Duas armadilhas do traço grosso com corrosão**, ambas achadas olhando:
+  1. **Ponta arredondada fecha a lacuna.** Ela avança meia espessura além de cada traço, então num traço grosso as fendas somem. Camada com `dash` passa a usar ponta reta — que aliás é mais parecido com tinta rasgada.
+  2. **`dash` em % fixa vira conta de colar.** Com a linha grossa, trechos da ordem da própria espessura viram quadradinhos. O `dash` agora é **múltiplo da espessura da camada**, então acompanha o controle de traço do usuário em vez de quebrar quando ele mexe. Tem teste que falha se voltar a ser absoluto.
+- 71 testes, bundle 74,5 → 76,4 kB gzip.
 
 ## Pendências
 

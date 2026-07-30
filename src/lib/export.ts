@@ -66,8 +66,12 @@ export async function renderOverlay(state: RenderState, size: { w: number; h: nu
         ctx.shadowBlur = pct(layer.glow.blur)
       }
       if (layer.dash) {
-        ctx.setLineDash(layer.dash.map(pct))
-        ctx.lineDashOffset = pct(layer.dashOffset ?? 0)
+        // Múltiplo da espessura da camada, igual ao editor.
+        const unit = style.strokeWidth * layer.width
+        ctx.setLineDash(layer.dash.map(v => pct(v * unit)))
+        ctx.lineDashOffset = pct((layer.dashOffset ?? 0) * unit)
+        // Ponta reta, como no editor: a arredondada fecharia as lacunas.
+        ctx.lineCap = 'butt'
       }
       // Rotação antes do deslocamento da camada, na mesma ordem do <g> do editor.
       if (theme.rotate) {

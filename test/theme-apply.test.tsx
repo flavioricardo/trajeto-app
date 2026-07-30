@@ -51,6 +51,31 @@ it('as camadas seguem a cor que o usuário escolher, não uma cor fixa', () => {
   expect(strokes.some(s => s?.toLowerCase().startsWith('#ff4d12'))).toBe(false)
 })
 
+it('a corrosão acompanha a espessura em vez de virar conta de colar', () => {
+  open()
+  fireEvent.click(themeBtn('Carimbo'))
+  const dash = () => document.querySelector('.route-box path')!.getAttribute('stroke-dasharray')!.split(' ').map(Number)
+
+  const antes = dash()
+  fireEvent.change(screen.getByLabelText(/^Traço/), { target: { value: '1' } })
+  const depois = dash()
+
+  // afinar o traço encolhe o padrão inteiro na mesma proporção: trecho de tinta
+  // da ordem da espessura vira quadradinho, e é isso que o teste impede
+  const razao = antes[0] / depois[0]
+  expect(razao).toBeGreaterThan(1)
+  expect(antes[1] / depois[1]).toBeCloseTo(razao, 6)
+})
+
+it('camada corroída usa ponta reta, senão a lacuna some', () => {
+  open()
+  fireEvent.click(themeBtn('Carimbo'))
+  expect(document.querySelector('.route-box path')!.getAttribute('stroke-linecap')).toBe('butt')
+
+  fireEvent.click(themeBtn('Nenhum'))
+  expect(document.querySelector('.route-box path')!.getAttribute('stroke-linecap')).toBe('round')
+})
+
 it('o texto recebe contorno e sombra do tema', () => {
   open()
   fireEvent.click(themeBtn('Fofo'))
