@@ -1,4 +1,5 @@
 import { OverlayFont } from '../fonts'
+import { Pt, Trace } from './geo'
 
 /**
  * Um tema pinta o conteúdo do quadro: o traço e os dados.
@@ -24,6 +25,10 @@ export type RouteLayer = {
   dy?: number
   /** brilho ao redor, em % da largura do quadro */
   glow?: { paint: Paint; blur: number }
+  /** traço/lacuna alternados, em % da largura do quadro — é assim que a tinta corrói */
+  dash?: number[]
+  /** desloca o início do padrão, pra que as falhas de duas camadas não coincidam */
+  dashOffset?: number
   opacity?: number
 }
 
@@ -41,6 +46,32 @@ export type Theme = {
   palette: { routeColor: string; textColor: string; font: OverlayFont; strokeWidth: number }
   route: RouteLayer[]
   text: TextTheme
+  /** Geometria própria do tema, em 0-1, desenhada junto do traço. Ex.: os anéis do carimbo. */
+  frame?: Trace
+  /** Encolhe o traço em torno do centro pra caber dentro da moldura. */
+  contentScale?: number
+  /** Inclina o conteúdo do quadro, em graus. */
+  rotate?: number
+}
+
+/** Círculo em 0-1 centrado no quadro, pros anéis da moldura. */
+const ring = (r: number, n = 120): Pt[] =>
+  Array.from({ length: n + 1 }, (_, i) => {
+    const t = (i / n) * 2 * Math.PI
+    return { x: 0.5 + r * Math.cos(t), y: 0.5 + r * Math.sin(t) }
+  })
+
+/**
+ * Traçado final: o do usuário encolhido pela moldura, mais a geometria do tema.
+ * Editor e export chamam a mesma função, então não há como divergirem.
+ */
+export function themedTrace(route: Trace, theme: Theme): Trace {
+  const s = theme.contentScale ?? 1
+  const scaled =
+    s === 1
+      ? route
+      : route.map(sub => sub.map(p => ({ x: 0.5 + (p.x - 0.5) * s, y: 0.5 + (p.y - 0.5) * s })))
+  return theme.frame ? [...scaled, ...theme.frame] : scaled
 }
 
 const clampByte = (v: number) => Math.min(255, Math.max(0, Math.round(v)))
@@ -126,7 +157,7 @@ const FOFO: Theme = {
   id: 'fofo',
   label: 'Fofo',
   hint: 'Rosa pastel com brilho, contorno branco e letra arredondada.',
-  palette: { routeColor: '#FF7EB6', textColor: '#FFFFFF', font: 'Fredoka', strokeWidth: 1.8 },
+  palette: { routeColor: '#FF7EB6', textColor: '#FFFFFF', font: 'Baloo 2', strokeWidth: 1.8 },
   route: [
     { paint: 'route', width: 2.4, opacity: 0.4, glow: { paint: 'route', blur: 2.8 } },
     { paint: '#FFFFFF', width: 1.9 },
@@ -139,19 +170,25 @@ const FOFO: Theme = {
   },
 }
 
-// Carimbo de borracha: tinta única, batida fora de registro e cobertura
-// irregular. A fonte condensada em caixa alta é metade da leitura.
+// Carimbo de borracha: anéis em volta, tinta corroída e a impressão torta.
+// O padrão de traço é longo e irregular de propósito — um tracejado regular
+// leria como intenção, não como desgaste.
+const INK_BREAKS = [1.3, 0.26, 0.85, 0.2, 2.4, 0.32, 0.6, 0.22, 1.7, 0.28]
+
 const CARIMBO: Theme = {
   id: 'carimbo',
   label: 'Carimbo',
-  hint: 'Tinta única batida fora de registro, em caixa alta condensada.',
+  hint: 'Anéis, tinta corroída e a impressão batida torta.',
   palette: { routeColor: '#A8231B', textColor: '#A8231B', font: 'Bebas Neue', strokeWidth: 1.5 },
   route: [
-    { paint: 'route', width: 1.3, opacity: 0.32, dx: 0.55, dy: 0.6 },
-    { paint: 'route', width: 1, opacity: 0.9 },
-    { paint: 'routeDark', width: 0.42, opacity: 0.35, dx: -0.16, dy: -0.16 },
+    { paint: 'route', width: 1.25, opacity: 0.3, dx: 0.5, dy: 0.55, dash: INK_BREAKS, dashOffset: 0.9 },
+    { paint: 'route', width: 1, opacity: 0.92, dash: INK_BREAKS },
+    { paint: 'routeDark', width: 0.4, opacity: 0.3, dx: -0.15, dy: -0.15, dash: INK_BREAKS, dashOffset: 2.1 },
   ],
   text: { shadow: { paint: 'route', dx: 0.22, dy: 0.24, blur: 0.35 } },
+  frame: [ring(0.49), ring(0.44)],
+  contentScale: 0.62,
+  rotate: -8,
 }
 
 export const THEMES: Theme[] = [PLAIN, TRIDI, MEDIEVAL, TECH, FOFO, CARIMBO]
