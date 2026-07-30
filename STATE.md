@@ -44,17 +44,26 @@
 - Deploy de produção via MCP: `dpl_2jRwnrpJ3AYttSfWQf2AZi1MqG2F` (READY). A primeira tentativa (`dpl_B8AqBK…`) falhou com "Could not resolve ./styles.css" — `deploy_to_vercel` sobe uma árvore de arquivos explícita e o CSS ficou de fora. Ao deployar por MCP, conferir a lista contra `find src api -type f`.
 - Estado verificado por API nesta sessão: `ssoProtection.enabled = true` (deployments sem domínio próprio seguem fechados ao público) e `/api/strava-config` devolve `{"clientId":null}` (env var ausente ou ainda não numérica). Projeto Vercel continua sem link com o repo GitHub, então todo deploy é manual.
 
+## Sessão 7 (cont.) — ações do Flávio
+
+- **Git do projeto conectado na Vercel.** Conectar não dispara deploy sozinho: o próximo push em main é que vira o primeiro deploy automático. Até lá a produção seguia no `dpl_2jRwnrpJ3AYttSfWQf2AZi1MqG2F` (deploy manual por MCP).
+- **Client Secret do Strava rotacionado.** Isso invalida o secret vazado na sessão 5 e destrava a Deployment Protection: agora dá pra abrir o app ao público sem reabrir a exposição.
+- **PAT `trajeto-push`:** encerrado por decisão do Flávio — os tokens estão perto da data de expiração e ele optou por deixar expirar em vez de revogar. Registrado como expiração, não revogação: o token mantém escrita até a data.
+- ⚠️ **Env var só vale a partir do próximo deploy.** A Vercel injeta as variáveis no build/deploy; mudá-las depois não afeta funções já publicadas. `/api/strava-config` continuava devolvendo `null` às 13:50 porque a produção era anterior à configuração. Qualquer troca de env var exige redeploy.
+
 ## Pendências
 
 - [x] Revisar spec de design — resolvido 2026-07-23 (aprovação delegada, session 2)
 - [x] Definir nome do produto — resolvido 2026-07-23: Traço (session 2)
 - [x] Criar repo GitHub `trajeto-app` e dar push — resolvido 2026-07-23 (session 2)
-- [ ] REVOGAR token PAT `trajeto-push` — ⚠️ **5 sessões aberta, violando a regra das 2 sessões** — https://github.com/settings/personal-access-tokens
-      | Blocks: segurança — token com write vive no histórico do chat | Open since: 2026-07-23 (session 7 não conseguiu verificar: não há como checar a validade de um PAT pelas ferramentas da sessão. Assumir aberto até você confirmar a revogação na tela de tokens.)
+- [x] Token PAT `trajeto-push` — encerrado 2026-07-30 (session 7) por decisão do Flávio: deixar expirar em vez de revogar, já que os tokens estão perto da data de expiração. Aberta desde 2026-07-23 (5 sessões).
 - [x] Deploy Vercel — resolvido 2026-07-23 via MCP `deploy_to_vercel`, build ok (session 2)
-- [ ] ROTACIONAR client secret do Strava (https://www.strava.com/settings/api), **e só então** desligar a Deployment Protection e conectar o repo GitHub (https://vercel.com/flavioricardo91/trajeto-app/settings)
-      | Blocks: acesso público (403) e CI/CD por push — mas a ordem importa: a Deployment Protection é o que hoje contém o vazamento do secret (session 5), que segue **não rotacionado**. Desligar antes de rotacionar reabre a exposição.
-      | Open since: 2026-07-23 (session 2; `ssoProtection.enabled = true` confirmado por API em 2026-07-30)
-      | Nota: `/api/strava-config` devolve `null`, o que significa env var ausente **ou** ainda com o valor do secret colado por engano — o guard esconde os dois casos. Conferir o valor real ao rotacionar.
-- [ ] Registrar app no Strava e configurar env vars — https://www.strava.com/settings/api (Authorization Callback Domain: trajeto-app-flavioricardo91.vercel.app), depois STRAVA_CLIENT_ID e STRAVA_CLIENT_SECRET em https://vercel.com/flavioricardo91/trajeto-app/settings/environment-variables
-      | Blocks: botão Conectar com Strava funcionar | Open since: 2026-07-24 (session 4; `/api/strava-config` devolvia `{"clientId":null}` em 2026-07-30)
+- [x] Rotacionar client secret do Strava — resolvido 2026-07-30 (session 7), secret novo gerado. Invalida o vazamento da session 5.
+- [x] Conectar o repo GitHub na Vercel — resolvido 2026-07-30 (session 7). Deploy por push, sem mais MCP manual.
+- [ ] Desligar a Deployment Protection — https://vercel.com/flavioricardo91/trajeto-app/settings/deployment-protection (Vercel Authentication → Disabled)
+      | Blocks: acesso público — `ssoProtection.enabled = true` confirmado por API em 2026-07-30, então o app segue fechado (SSO) em todos os domínios `.vercel.app`.
+      | Open since: 2026-07-23 (session 2). O bloqueio de segurança que segurava essa ação (secret não rotacionado) caiu com a rotação de 2026-07-30.
+- [ ] Conferir STRAVA_CLIENT_ID e STRAVA_CLIENT_SECRET na Vercel e **redeployar** — https://vercel.com/flavioricardo91/trajeto-app/settings/environment-variables (Authorization Callback Domain no Strava: trajeto-app-flavioricardo91.vercel.app)
+      | Blocks: botão Conectar com Strava funcionar. `/api/strava-config` devolvia `{"clientId":null}` às 13:50 de 2026-07-30 — env var ausente **ou** produção anterior à configuração, porque env var só entra em vigor no deploy seguinte.
+      | Como validar: abrir `/api/strava-config` depois do redeploy. Tem que vir um número no `clientId`; `null` significa que o CLIENT_ID não é numérico (o guard rejeita) ou não está setado.
+      | Open since: 2026-07-24 (session 4)
