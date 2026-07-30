@@ -247,6 +247,7 @@ select { padding: 9px 10px; border-radius: 10px; border: 1px solid var(--contour
 
 .shape-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .shape-grid .btn { padding: 10px 6px; font-size: 13px; }
+.shape-grid .btn[aria-pressed='true'] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 
 .error { color: #b3261e; font-size: 13px; margin: 8px 0 0; }
 .hint { color: var(--moss); font-size: 12px; margin: 6px 0 0; }

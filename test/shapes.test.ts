@@ -20,6 +20,24 @@ it('extractShape: Point retorna null', () => {
   expect(extractShape({ type: 'Point', coordinates: [0, 0] })).toBeNull()
 })
 
+it('as silhuetas desenhadas à mão têm densidade pra sair lisas', () => {
+  // o traçado é polilinha: poucos vértices viram facetas visíveis
+  for (const name of ['Tênis', 'Joinha', 'Não curti']) {
+    expect(SHAPES[name].length, name).toBeGreaterThan(80)
+  }
+})
+
+it('Não curti é a joinha girada 180°, não espelhada', () => {
+  // espelhar só em Y inverteria a mão, trocando direita por esquerda
+  const up = SHAPES['Joinha']
+  const down = SHAPES['Não curti']
+  expect(down).toHaveLength(up.length)
+  for (let i = 0; i < up.length; i++) {
+    expect(down[i].x).toBeCloseTo(1 - up[i].x, 10)
+    expect(down[i].y).toBeCloseTo(1 - up[i].y, 10)
+  }
+})
+
 it('todas as formas: 0-1, fechadas, >=8 pontos', () => {
   for (const [name, pts] of Object.entries(SHAPES)) {
     expect(pts.length, name).toBeGreaterThanOrEqual(8)
