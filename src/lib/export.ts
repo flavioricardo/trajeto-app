@@ -1,6 +1,7 @@
 import { Trace } from './geo'
 import { RouteBox, StatElement, Style } from '../state'
 import { Theme, Paint, paintOf, themedTrace } from './themes'
+import { coverRect } from './photo'
 
 type RenderState = {
   elements: StatElement[]
@@ -8,6 +9,8 @@ type RenderState = {
   routeBox: RouteBox
   style: Style
   theme: Theme
+  /** Foto de fundo já decodificada. Sem ela o PNG sai transparente, como sempre. */
+  photo?: HTMLImageElement | null
 }
 
 /**
@@ -15,7 +18,7 @@ type RenderState = {
  * Todas as medidas derivam de % da largura — mesmo modelo do editor.
  */
 export async function renderOverlay(state: RenderState, size: { w: number; h: number }): Promise<Blob> {
-  const { elements, route, routeBox, style, theme } = state
+  const { elements, route, routeBox, style, theme, photo } = state
   const canvas = document.createElement('canvas')
   canvas.width = size.w
   canvas.height = size.h
@@ -27,6 +30,12 @@ export async function renderOverlay(state: RenderState, size: { w: number; h: nu
     document.fonts.load(`${labelPx}px "${style.font}"`),
     document.fonts.load(`bold ${valuePx}px "${style.font}"`),
   ]).catch(() => {}) // fonte não carregou: canvas usa fallback
+
+  // A foto entra primeiro, por baixo de tudo, com o mesmo recorte do editor.
+  if (photo) {
+    const { sx, sy, sw, sh } = coverRect(photo.naturalWidth, photo.naturalHeight, size.w, size.h)
+    ctx.drawImage(photo, sx, sy, sw, sh, 0, 0, size.w, size.h)
+  }
 
   /** Medidas do tema são % da largura do quadro. */
   const pct = (v: number) => (v / 100) * size.w
@@ -133,7 +142,10 @@ export async function renderOverlay(state: RenderState, size: { w: number; h: nu
     draw(el.value, y + labelPx * 1.35, 1)
   }
 
+  // Com foto não há transparência pra preservar, e JPEG sai muito menor que
+  // PNG em imagem fotográfica. Sem foto, o PNG transparente é o produto.
+  const [type, quality] = photo ? ['image/jpeg', 0.92] : ['image/png', undefined]
   return new Promise((resolve, reject) =>
-    canvas.toBlob(b => (b ? resolve(b) : reject(new Error('Falha ao gerar PNG'))), 'image/png'),
+    canvas.toBlob(b => (b ? resolve(b) : reject(new Error('Falha ao gerar a imagem'))), type as string, quality),
   )
 }

@@ -1,6 +1,8 @@
 import { useRef } from 'react'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
-import { presetAtom, routeAtom, routeBoxAtom, elementsAtom, styleAtom, guidesAtom, themeAtom, StatElement } from '../state'
+import {
+  presetAtom, routeAtom, routeBoxAtom, elementsAtom, styleAtom, guidesAtom, themeAtom, photoAtom, StatElement,
+} from '../state'
 import { useDrag, clamp } from './useDrag'
 import { snapTo, CANVAS_TARGETS } from '../lib/guides'
 import { Theme, themeById, paintOf, themedTrace } from '../lib/themes'
@@ -15,11 +17,13 @@ export default function EditorCanvas() {
   const route = useAtomValue(routeAtom)
   const elements = useAtomValue(elementsAtom)
   const guides = useAtomValue(guidesAtom)
+  const photo = useAtomValue(photoAtom)
   const ref = useRef<HTMLDivElement>(null)
 
   return (
     <div className="canvas-wrap">
-      <div ref={ref} className={`editor ${preset}`} data-testid="editor">
+      <div ref={ref} className={`editor ${preset} ${photo ? 'has-photo' : ''}`} data-testid="editor">
+        {photo && <img className="photo" src={photo.url} alt="" aria-hidden="true" data-testid="photo" />}
         {route && <RouteBoxEl containerRef={ref} />}
         {elements.map(el => (
           <StatBlock key={el.id} el={el} containerRef={ref} />
