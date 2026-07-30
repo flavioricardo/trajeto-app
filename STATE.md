@@ -67,6 +67,16 @@
 - **Decisão de escopo:** sobrepor os dois traçados pra comparar aderência ficou de fora. Exigiria normalizar contra um bounding box comum (`normalizePoints` escala cada conjunto na própria caixa, então dois traçados quase idênticos sairiam desalinhados) e trocar `routeAtom`/`renderOverlay` pra coleção. É análise de treino, não overlay de story.
 - 28 testes (9 novos), build 59,4 kB gzip.
 
+## Sessão 8 (2026-07-30) — formas de modalidade
+
+- **Rota passou a ser `Trace = Pt[][]`** (subcaminhos). Ícone de esporte é traço solto — cabeça separada do tronco, duas rodas na bicicleta — e o modelo antigo de polilinha única ligaria as partes com um risco. Editor e `renderOverlay` desenham `moveTo` por subcaminho; GPX/Strava/local entram como `[pontos]`.
+- **Formas param de ser desenhadas à mão.** Três tentativas de silhueta de tênis provaram que não dá. Agora vêm de ícones amostrados em polilinha por `scripts/gen-shapes.mjs`, que usa `getPointAtLength` no Chromium e grava `src/lib/shapes-icons.ts` (gerado, não editar).
+- **Fontes e licenças:** decorativas do **Feather** (MIT, já é a família da interface); modalidades e o tênis do **Tabler** (MIT), porque o Feather **não tem nenhum ícone de esporte** — conferido, 0 de 287. Tabler nasceu na mesma grade 24×24 com traço 2, então as duas convivem. Levantamento feito: Tabler 23/23 modalidades, Phosphor 19/20, Lucide só objetos.
+- **Ícones do Strava estão fora**: arte proprietária e brand guidelines restritivas. Aproveitamos a taxonomia de modalidades, não o desenho.
+- 12 modalidades (Corrida, Pedal, Natação, Caminhada, Trilha, Musculação, Yoga, Skate, Remo, Esqui, Futebol, Vela) e 7 decorativas, agrupadas na aba com rótulo.
+- **Custo:** bundle de 60,0 → 72,5 kB gzip. Se apertar, o passo de amostragem (`STEP` no gerador) é a alavanca — 0,45 hoje.
+- Armadilha registrada: um `path` pode ter subcaminhos soltos (o `ThumbsDown` do Feather tem), e `getPointAtLength` os percorre em sequência. O gerador corta onde a distância entre amostras vizinhas estoura o passo, senão sai um risco ligando polegar e punho.
+
 ## Pendências
 
 - [x] Revisar spec de design — resolvido 2026-07-23 (aprovação delegada, session 2)

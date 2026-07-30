@@ -94,7 +94,11 @@ function RouteBoxEl({ containerRef }: { containerRef: React.RefObject<HTMLDivEle
   )
   const resize = useDrag(containerRef, dx => setBox(b => ({ ...b, size: clamp(b.size + dx, 15, 140) })))
 
-  const d = route.map((p, i) => `${i === 0 ? 'M' : 'L'}${(p.x * 100).toFixed(2)} ${(p.y * 100).toFixed(2)}`).join(' ')
+  // Um subcaminho por parte solta da forma: a cabeça do corredor não pode ficar
+  // ligada ao tronco por um risco.
+  const d = route
+    .map(sub => sub.map((p, i) => `${i === 0 ? 'M' : 'L'}${(p.x * 100).toFixed(2)} ${(p.y * 100).toFixed(2)}`).join(' '))
+    .join(' ')
 
   return (
     <div

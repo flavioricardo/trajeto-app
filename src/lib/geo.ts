@@ -1,6 +1,13 @@
 export type LatLon = { lat: number; lon: number; ele?: number; time?: number }
 export type Pt = { x: number; y: number }
 
+/**
+ * Traçado desenhado no quadro: uma lista de subcaminhos, cada um uma polilinha
+ * contínua. Rota de GPS tem um só; formas de ícone têm várias partes soltas
+ * (a cabeça separada do corpo, as duas rodas da bicicleta).
+ */
+export type Trace = Pt[][]
+
 const toRad = (d: number) => (d * Math.PI) / 180
 
 export function haversine(a: LatLon, b: LatLon): number {

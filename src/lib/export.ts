@@ -1,9 +1,9 @@
-import { Pt } from './geo'
+import { Trace } from './geo'
 import { RouteBox, StatElement, Style } from '../state'
 
 type RenderState = {
   elements: StatElement[]
-  route: Pt[] | null
+  route: Trace | null
   routeBox: RouteBox
   style: Style
 }
@@ -26,7 +26,7 @@ export async function renderOverlay(state: RenderState, size: { w: number; h: nu
     document.fonts.load(`bold ${valuePx}px "${style.font}"`),
   ]).catch(() => {}) // fonte não carregou: canvas usa fallback
 
-  if (route && route.length > 1) {
+  if (route?.length) {
     const bx = (routeBox.x / 100) * size.w
     const by = (routeBox.y / 100) * size.h
     const bs = (routeBox.size / 100) * size.w
@@ -35,11 +35,15 @@ export async function renderOverlay(state: RenderState, size: { w: number; h: nu
     ctx.lineJoin = 'round'
     ctx.lineCap = 'round'
     ctx.beginPath()
-    route.forEach((p, i) => {
-      const x = bx + p.x * bs
-      const y = by + p.y * bs
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
-    })
+    // moveTo por subcaminho mantém as partes soltas da forma separadas no PNG,
+    // do mesmo jeito que no editor.
+    for (const sub of route) {
+      sub.forEach((p, i) => {
+        const x = bx + p.x * bs
+        const y = by + p.y * bs
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+      })
+    }
     ctx.stroke()
   }
 

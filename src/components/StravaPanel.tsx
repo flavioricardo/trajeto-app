@@ -112,7 +112,7 @@ function useApplyImport() {
   const [imports, setImports] = useAtom(importsAtom)
 
   return (r: ImportResult, mode: ApplyMode) => {
-    if (mode !== 'stats') setRoute(normalizePoints(r.points))
+    if (mode !== 'stats') setRoute([normalizePoints(r.points)])
 
     // Guarda por tipo pra cruzar previsto (rota) com feito (atividade), em qualquer ordem de importação.
     const next = { ...imports, [r.kind]: r }
