@@ -1,13 +1,16 @@
 /**
  * Gera src/lib/shapes-icons.ts amostrando ícones em polilinhas.
  *
- * Fontes, ambas MIT:
- *   Feather Icons — © Cole Bemis — https://github.com/feathericons/feather
- *   Tabler Icons  — © Paweł Kuna — https://github.com/tabler/tabler-icons
+ * Fontes, todas MIT:
+ *   Feather Icons — © Cole Bemis  — https://github.com/feathericons/feather
+ *   Tabler Icons  — © Paweł Kuna  — https://github.com/tabler/tabler-icons
+ *   Iconoir       — © Luca Burgio — https://github.com/iconoir-icons/iconoir
  *
  * O Feather cobre as formas decorativas, mas não tem nenhum ícone de esporte
- * (conferido: 0 de 287), então as modalidades vêm do Tabler, que nasceu na
- * mesma grade 24×24 com traço 2 e pontas arredondadas.
+ * (conferido: 0 de 287), então as modalidades vêm do Tabler. O boxe vem do
+ * Iconoir, porque o Tabler só tem `karate` de combate. As três nascem na mesma
+ * grade 24×24 de traço, o que importa aqui: ícone preenchido (Phosphor,
+ * Material Symbols) traçaria o contorno da forma e sairia com linha dupla.
  *
  * Por que gerar pontos em vez de guardar o `d`: o app desenha a rota como
  * polilinha, no editor e no canvas do export. Achatar o caminho exige geometria
@@ -101,6 +104,24 @@ const ACTIVITIES = {
     'M4 18l-1 -3h18l-1 3',
     'M11 12h7l-7 -9v9',
     'M8 7l-2 5',
+  ].map(path),
+  // Combate: o Tabler só tem `karate`, então o boxe vem do Iconoir.
+  Luta: [
+    'M3 9l4.5 1l3 2.5',
+    'M13 21v-8l3 -5.5',
+    'M8 4.5l4 2l4 1l4 3.5l-2 3.5',
+    'M15.007 5a2 2 0 1 0 4 0a2 2 0 1 0 -4 0',
+  ].map(path),
+  Boxe: [
+    'M8.48901 17.7273H18.3556M8.48901 17.7273V21H18.3556V17.7273M8.48901 17.7273C5.20016 15.5455 3.55573 10.0909 4.10387 8.45455C4.54239 7.14545 6.47916 7.54545 7.39273 7.90909C7.39273 4.09091 9.03715 3 13.4223 3C17.8074 3 20 4.09091 20 9.54545C20 13.9091 18.9037 16.8182 18.3556 17.7273',
+    'M7.39282 7.90909C7.75825 8.27272 8.81799 9 10.1335 9C11.4491 9 13.9705 9 15.0668 9',
+    'M7.39282 7.90909C7.39282 11.7273 9.03725 12.2727 10.1335 12.2727',
+  ].map(path),
+  Esgrima: [
+    'M21 3v5l-11 9l-4 4l-3 -3l4 -4l9 -11l5 0',
+    'M5 13l6 6',
+    'M14.32 17.32l3.68 3.68l3 -3l-3.365 -3.365',
+    'M10 5.5l-2 -2.5h-5v5l3 2.5',
   ].map(path),
 }
 

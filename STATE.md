@@ -74,7 +74,9 @@
 - **Fontes e licenças:** decorativas do **Feather** (MIT, já é a família da interface); modalidades e o tênis do **Tabler** (MIT), porque o Feather **não tem nenhum ícone de esporte** — conferido, 0 de 287. Tabler nasceu na mesma grade 24×24 com traço 2, então as duas convivem. Levantamento feito: Tabler 23/23 modalidades, Phosphor 19/20, Lucide só objetos.
 - **Ícones do Strava estão fora**: arte proprietária e brand guidelines restritivas. Aproveitamos a taxonomia de modalidades, não o desenho.
 - 12 modalidades (Corrida, Pedal, Natação, Caminhada, Trilha, Musculação, Yoga, Skate, Remo, Esqui, Futebol, Vela) e 7 decorativas, agrupadas na aba com rótulo.
-- **Custo:** bundle de 60,0 → 72,5 kB gzip. Se apertar, o passo de amostragem (`STEP` no gerador) é a alavanca — 0,45 hoje.
+- **Combate (sessão 8, cont.):** Luta (Tabler `karate`), Boxe (**Iconoir**, MIT — o Tabler só tem `karate` de combate) e Esgrima (Tabler `swords`). 15 modalidades.
+- **Regra pra escolher fonte de ícone daqui pra frente: tem que ser de traço.** Phosphor e Material Symbols têm ótima cobertura de esporte, mas os ícones são preenchidos (`fill`), e traçar um preenchido desenha o *contorno* da forma — sai com linha dupla e destoa das figuras de linha única. Foi por isso que o Phosphor ficou de fora apesar dos 19/20.
+- **Custo:** bundle de 60,0 → 74,5 kB gzip. Se apertar, o passo de amostragem (`STEP` no gerador) é a alavanca — 0,45 hoje.
 - Armadilha registrada: um `path` pode ter subcaminhos soltos (o `ThumbsDown` do Feather tem), e `getPointAtLength` os percorre em sequência. O gerador corta onde a distância entre amostras vizinhas estoura o passo, senão sai um risco ligando polegar e punho.
 
 ## Pendências
