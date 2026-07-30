@@ -52,8 +52,9 @@
 - [ ] REVOGAR token PAT `trajeto-push` — ⚠️ **5 sessões aberta, violando a regra das 2 sessões** — https://github.com/settings/personal-access-tokens
       | Blocks: segurança — token com write vive no histórico do chat | Open since: 2026-07-23 (confirmada ainda aberta em 2026-07-30, session 7)
 - [x] Deploy Vercel — resolvido 2026-07-23 via MCP `deploy_to_vercel`, build ok (session 2)
-- [ ] Configurar projeto na Vercel: desligar Deployment Protection E conectar o repo GitHub — https://vercel.com/flavioricardo91/trajeto-app/settings
-      | Blocks: acesso público (403) e CI/CD por push | Open since: 2026-07-23 (session 2; `ssoProtection.enabled = true` confirmado por API em 2026-07-30)
-      | ⚠️ Antes de desligar: a Deployment Protection foi o que conteve o vazamento do client secret (session 5) e o secret **não foi rotacionado**. Rotacionar no Strava antes de abrir ao público.
+- [ ] ROTACIONAR client secret do Strava (https://www.strava.com/settings/api), **e só então** desligar a Deployment Protection e conectar o repo GitHub (https://vercel.com/flavioricardo91/trajeto-app/settings)
+      | Blocks: acesso público (403) e CI/CD por push — mas a ordem importa: a Deployment Protection é o que hoje contém o vazamento do secret (session 5), que segue **não rotacionado**. Desligar antes de rotacionar reabre a exposição.
+      | Open since: 2026-07-23 (session 2; `ssoProtection.enabled = true` confirmado por API em 2026-07-30)
+      | Nota: `/api/strava-config` devolve `null`, o que significa env var ausente **ou** ainda com o valor do secret colado por engano — o guard esconde os dois casos. Conferir o valor real ao rotacionar.
 - [ ] Registrar app no Strava e configurar env vars — https://www.strava.com/settings/api (Authorization Callback Domain: trajeto-app-flavioricardo91.vercel.app), depois STRAVA_CLIENT_ID e STRAVA_CLIENT_SECRET em https://vercel.com/flavioricardo91/trajeto-app/settings/environment-variables
       | Blocks: botão Conectar com Strava funcionar | Open since: 2026-07-24 (session 4; `/api/strava-config` devolvia `{"clientId":null}` em 2026-07-30)
