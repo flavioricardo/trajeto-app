@@ -1,4 +1,4 @@
-import { THEMES, themeById, shade, paintOf } from '../src/lib/themes'
+import { THEMES, themeById, shade, paintOf, themedTrace } from '../src/lib/themes'
 import { OVERLAY_FONTS } from '../src/fonts'
 
 it('shade escurece e clareia, e ignora entrada inválida', () => {
@@ -60,6 +60,46 @@ it('o Carimbo é monocromático e bate fora de registro', () => {
   expect(c.palette.textColor).toBe(c.palette.routeColor)
   // pelo menos uma camada deslocada e translúcida, que é a batida irregular
   expect(c.route.some(l => (l.dx || l.dy) && (l.opacity ?? 1) < 1)).toBe(true)
+})
+
+it('themedTrace encolhe o conteúdo e acrescenta a moldura', () => {
+  const route = [[{ x: 0, y: 0 }, { x: 1, y: 1 }]]
+  const carimbo = themeById('carimbo')
+  const out = themedTrace(route, carimbo)
+
+  // o traço do usuário encolheu em torno do centro
+  expect(out[0][0].x).toBeCloseTo(0.5 - 0.5 * carimbo.contentScale!, 6)
+  expect(out[0][1].x).toBeCloseTo(0.5 + 0.5 * carimbo.contentScale!, 6)
+  // e a moldura entrou como subcaminhos extras
+  expect(out.length).toBe(route.length + carimbo.frame!.length)
+})
+
+it('themedTrace devolve o traço intacto quando o tema não tem moldura', () => {
+  const route = [[{ x: 0.2, y: 0.3 }, { x: 0.8, y: 0.7 }]]
+  expect(themedTrace(route, themeById('plain'))).toEqual(route)
+})
+
+it('a moldura do carimbo fica dentro do quadro e envolve o conteúdo', () => {
+  const c = themeById('carimbo')
+  for (const anel of c.frame!) {
+    for (const p of anel) {
+      expect(p.x).toBeGreaterThanOrEqual(0)
+      expect(p.x).toBeLessThanOrEqual(1)
+    }
+  }
+  // o conteúdo encolhido cabe dentro do anel interno, senão encostaria na moldura
+  const raioInterno = 0.44
+  const meiaDiagonal = (c.contentScale! * Math.SQRT2) / 2
+  expect(meiaDiagonal).toBeLessThan(raioInterno)
+})
+
+it('o carimbo corrói a tinta e bate torto', () => {
+  const c = themeById('carimbo')
+  expect(c.rotate).toBeTruthy()
+  expect(c.route.every(l => l.dash?.length)).toBe(true)
+  // as falhas de camadas diferentes não podem coincidir, senão viram tracejado
+  const offsets = c.route.map(l => l.dashOffset ?? 0)
+  expect(new Set(offsets).size).toBe(offsets.length)
 })
 
 it('nenhum tema traz o personagem da Sanrio', () => {

@@ -1,6 +1,6 @@
 import { Trace } from './geo'
 import { RouteBox, StatElement, Style } from '../state'
-import { Theme, Paint, paintOf } from './themes'
+import { Theme, Paint, paintOf, themedTrace } from './themes'
 
 type RenderState = {
   elements: StatElement[]
@@ -39,11 +39,13 @@ export async function renderOverlay(state: RenderState, size: { w: number; h: nu
     ctx.lineJoin = 'round'
     ctx.lineCap = 'round'
 
+    // Mesma função do editor: moldura e encolhimento não têm como divergir.
+    const drawn = themedTrace(route, theme)
     const trace = () => {
       ctx.beginPath()
       // moveTo por subcaminho mantém as partes soltas da forma separadas no PNG,
       // do mesmo jeito que no editor.
-      for (const sub of route) {
+      for (const sub of drawn) {
         sub.forEach((p, i) => {
           const x = bx + p.x * bs
           const y = by + p.y * bs
@@ -62,6 +64,18 @@ export async function renderOverlay(state: RenderState, size: { w: number; h: nu
       if (layer.glow) {
         ctx.shadowColor = ink(layer.glow.paint)
         ctx.shadowBlur = pct(layer.glow.blur)
+      }
+      if (layer.dash) {
+        ctx.setLineDash(layer.dash.map(pct))
+        ctx.lineDashOffset = pct(layer.dashOffset ?? 0)
+      }
+      // Rotação antes do deslocamento da camada, na mesma ordem do <g> do editor.
+      if (theme.rotate) {
+        const cx = bx + bs / 2
+        const cy = by + bs / 2
+        ctx.translate(cx, cy)
+        ctx.rotate((theme.rotate * Math.PI) / 180)
+        ctx.translate(-cx, -cy)
       }
       ctx.translate(pct(layer.dx ?? 0), pct(layer.dy ?? 0))
       trace()

@@ -90,7 +90,11 @@
 - Fontes do Google não carregam neste sandbox (proxy bloqueia `fonts.googleapis.com`), então a troca de fonte por tema não aparece nas capturas daqui — mas o `font-family` computado muda, e em produção carrega.
 - **Sessão 9 (cont.):** Fofo trocou a Caveat pela **Fredoka** (fonte nova no app, arredondada — a lista não tinha nada de fato fofo) e ganhou halo de brilho no traço e no texto. Tema **Carimbo** entra: tinta única (texto na mesma cor do traço), batida deslocada e translúcida por cima, Bebas Neue condensada.
 - Armadilha do Fofo com contorno **e** brilho: no canvas a sombra ia no contorno e de novo no preenchimento, empilhando o brilho. O `text-shadow` do editor envolve o conjunto uma vez só, então a sombra agora acompanha só o contorno, que é a forma mais externa.
-- 65 testes, bundle 74,5 → 76,1 kB gzip.
+- **Sessão 9 (cont. 2):** Fofo passa da Fredoka pra **Baloo 2**, bem mais bojuda (a Fredoka é arredondada mas moderada; ficou disponível no seletor). Carimbo ganha o que faltava pra ler como carimbo: **anéis de moldura**, **tinta corroída** e **impressão torta**.
+- O modelo de tema cresceu três campos pra isso: `dash`/`dashOffset` na camada (corrosão), e `frame` + `contentScale` + `rotate` no tema. `themedTrace()` monta o traçado final e é chamada **pelo editor e pelo export**, então moldura e encolhimento não têm como divergir.
+- Sobre o padrão de corrosão: começou grosso e leu como tracejado intencional. Carimbo real tem falha fina e frequente — o padrão atual é curto e irregular, e cada camada usa um `dashOffset` diferente pra que as falhas não coincidam.
+- A animação de desenhar a rota usa `dasharray`, então ela sai de cena quando o tema corrói a tinta (que também é `dasharray`). Conflito conhecido, não bug.
+- 69 testes, bundle 74,5 → 76,4 kB gzip.
 
 ## Pendências
 
