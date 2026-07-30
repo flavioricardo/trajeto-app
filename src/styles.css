@@ -67,6 +67,18 @@ body {
   box-shadow: 0 6px 24px rgb(23 32 27 / 0.08);
   container-type: inline-size;
 }
+/* Foto de fundo: cobre o quadro igual ao export, que usa o mesmo recorte. */
+.editor .photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+/* Com foto, o xadrez de transparência sai de cena. */
+.editor.has-photo { background: var(--ink); }
+
 .editor.story { aspect-ratio: 9 / 16; }
 .editor.feed { aspect-ratio: 1 / 1; }
 
@@ -248,6 +260,9 @@ select { padding: 9px 10px; border-radius: 10px; border: 1px solid var(--contour
 .shape-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .shape-grid .btn { padding: 10px 6px; font-size: 13px; }
 .shape-grid .btn[aria-pressed='true'] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+.check { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--ink); }
+.check input { width: 17px; height: 17px; accent-color: var(--accent); }
 
 .error { color: #b3261e; font-size: 13px; margin: 8px 0 0; }
 .hint { color: var(--moss); font-size: 12px; margin: 6px 0 0; }

@@ -19,6 +19,16 @@ export const routeAtom = atom<Trace | null>(null)
 export const routeBoxAtom = atom<RouteBox>({ x: 15, y: 8, size: 70 })
 export const styleAtom = atom<Style>({ routeColor: '#FF4D12', textColor: '#FFFFFF', font: 'Archivo Black', strokeWidth: 1.2 })
 
+/**
+ * Foto de fundo escolhida pelo usuário. `url` é um object URL: mora na memória
+ * da aba, não vai pro servidor e morre quando a aba fecha. Nada de persistir.
+ */
+export type Photo = { url: string; name: string }
+export const photoAtom = atom<Photo | null>(null)
+
+/** Com foto no quadro, o padrão é entregar a composição pronta. */
+export const photoInExportAtom = atom(true)
+
 /** Tema visual do conteúdo do quadro. Ver lib/themes. */
 export const themeAtom = atom<string>('plain')
 

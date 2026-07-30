@@ -100,6 +100,15 @@
   2. **`dash` em % fixa vira conta de colar.** Com a linha grossa, trechos da ordem da própria espessura viram quadradinhos. O `dash` agora é **múltiplo da espessura da camada**, então acompanha o controle de traço do usuário em vez de quebrar quando ele mexe. Tem teste que falha se voltar a ser absoluto.
 - 71 testes, bundle 74,5 → 76,4 kB gzip.
 
+## Sessão 10 (2026-07-30) — foto de fundo
+
+- Usuário escolhe uma foto que entra atrás do overlay. **Nada sobe pro servidor**: `URL.createObjectURL` aponta pra memória da aba, não há `fetch` nem `localStorage`, e o object URL morre quando a aba fecha. É garantia por construção, não por política — não existe endpoint pra apagar depois.
+- O object URL anterior é revogado na troca e na remoção, senão o blob fica preso na memória da aba.
+- **Export com foto vira JPEG** (`0.92`), porque não há transparência pra preservar e PNG de foto é enorme. Sem foto, segue o PNG transparente de sempre. Um checkbox permite voltar ao PNG transparente mesmo com foto no quadro — útil pra quem só quer conferir contraste e montar no Instagram.
+- Editor e export usam o mesmo recorte `cover` (`coverRect`), então a prévia é fiel: o CSS `object-fit: cover` e o `drawImage` com recorte de origem concordam porque o quadro tem a proporção do preset.
+- Verificado no navegador que a única requisição com a foto é o próprio `blob:` — leitura da memória do navegador, não rede.
+- 78 testes, bundle 76,5 → 77,2 kB gzip.
+
 ## Pendências
 
 - [x] Revisar spec de design — resolvido 2026-07-23 (aprovação delegada, session 2)

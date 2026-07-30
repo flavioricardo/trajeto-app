@@ -5,11 +5,12 @@ import RouteSource from './RouteSource'
 import StravaPanel from './StravaPanel'
 import {
   presetAtom, PRESETS, Preset, styleAtom, elementsAtom, newStat,
-  routeAtom, routeBoxAtom, themeAtom,
+  routeAtom, routeBoxAtom, themeAtom, photoAtom, photoInExportAtom, Photo,
 } from '../state'
 import { OVERLAY_FONTS, OverlayFont } from '../fonts'
 import { renderOverlay } from '../lib/export'
 import { THEMES, Theme, themeById } from '../lib/themes'
+import { loadImage } from '../lib/photo'
 import { IconPlus, IconDownload } from './icons'
 
 export default function App() {
@@ -21,6 +22,7 @@ export default function App() {
         <StravaPanel />
         <RouteSource />
         <StatsPanel />
+        <PhotoPanel />
         <ThemePanel />
         <StylePanel />
       </main>
@@ -69,6 +71,59 @@ function StatsPanel() {
           <button className="btn" onClick={() => setElements([])}>Limpar tudo</button>
         )}
       </div>
+    </section>
+  )
+}
+
+function PhotoPanel() {
+  const [photo, setPhoto] = useAtom(photoAtom)
+  const [incluir, setIncluir] = useAtom(photoInExportAtom)
+
+  // O object URL anterior precisa ser revogado na mão: sem isso o blob fica
+  // preso na memória da aba até fechar.
+  const swap = (next: Photo | null) => {
+    setPhoto(prev => {
+      if (prev) URL.revokeObjectURL(prev.url)
+      return next
+    })
+  }
+
+  const onFile = (file: File | undefined) => {
+    if (!file) return
+    swap({ url: URL.createObjectURL(file), name: file.name })
+  }
+
+  return (
+    <section className="card">
+      <h2>Foto de fundo</h2>
+      {photo ? (
+        <>
+          <p className="hint" style={{ marginBottom: 10 }}>{photo.name}</p>
+          <div className="row">
+            <button className="btn" onClick={() => swap(null)}>Remover foto</button>
+            <label className="check">
+              <input type="checkbox" checked={incluir} onChange={e => setIncluir(e.target.checked)} />
+              Salvar a imagem com a foto
+            </label>
+          </div>
+          <p className="hint">
+            {incluir
+              ? 'Sai um JPEG com a foto e o overlay juntos, pronto pra postar.'
+              : 'Sai o PNG transparente de sempre. A foto fica só na prévia, pra você conferir o contraste.'}
+          </p>
+        </>
+      ) : (
+        <>
+          <div className="field">
+            <label htmlFor="photo">Escolha uma foto</label>
+            <input id="photo" type="file" accept="image/*" onChange={e => onFile(e.target.files?.[0])} />
+          </div>
+          <p className="hint">
+            A foto entra atrás do overlay pra você ver como fica. Ela não sai do seu aparelho e some quando você
+            fecha a aba: nada é enviado nem guardado.
+          </p>
+        </>
+      )}
     </section>
   )
 }
@@ -140,14 +195,18 @@ function ExportBar() {
   const routeBox = useAtomValue(routeBoxAtom)
   const style = useAtomValue(styleAtom)
   const theme = themeById(useAtomValue(themeAtom))
+  const photo = useAtomValue(photoAtom)
+  const comFoto = useAtomValue(photoInExportAtom)
   const [busy, setBusy] = useState(false)
 
   const doExport = async () => {
     setBusy(true)
     try {
       const size = PRESETS[preset]
-      const blob = await renderOverlay({ elements, route, routeBox, style, theme }, size)
-      const file = new File([blob], `trajeto-${preset}.png`, { type: 'image/png' })
+      const img = photo && comFoto ? await loadImage(photo.url) : null
+      const blob = await renderOverlay({ elements, route, routeBox, style, theme, photo: img }, size)
+      const ext = img ? 'jpg' : 'png'
+      const file = new File([blob], `trajeto-${preset}.${ext}`, { type: blob.type })
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file] }).catch(() => {})
       } else {
