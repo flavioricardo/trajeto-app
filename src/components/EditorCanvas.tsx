@@ -5,6 +5,10 @@ import { useDrag, clamp } from './useDrag'
 import { snapTo, CANVAS_TARGETS } from '../lib/guides'
 import { IconResize, IconX, IconMove } from './icons'
 
+/** Controles do canvas: mesmo tamanho nos três, e a espessura padrão do Feather. */
+const ICON = 12
+const ICON_STROKE = 2
+
 export default function EditorCanvas() {
   const preset = useAtomValue(presetAtom)
   const route = useAtomValue(routeAtom)
@@ -114,7 +118,7 @@ function RouteBoxEl({ containerRef }: { containerRef: React.RefObject<HTMLDivEle
           strokeDashoffset={100}
         />
       </svg>
-      <span className="grab" aria-hidden="true"><IconMove size={12} strokeWidth={2.4} /></span>
+      <span className="grab" aria-hidden="true"><IconMove size={ICON} strokeWidth={ICON_STROKE} /></span>
       <span
         className="resize"
         role="slider"
@@ -123,7 +127,7 @@ function RouteBoxEl({ containerRef }: { containerRef: React.RefObject<HTMLDivEle
         onPointerDown={e => { e.stopPropagation(); resize.onPointerDown(e) }}
         onPointerMove={resize.onPointerMove}
         onPointerUp={resize.onPointerUp}
-      ><IconResize size={13} strokeWidth={2.4} /></span>
+      ><IconResize size={ICON} strokeWidth={ICON_STROKE} /></span>
     </div>
   )
 }
@@ -171,13 +175,13 @@ function StatBlock({ el, containerRef }: { el: StatElement; containerRef: React.
         suppressContentEditableWarning
         onBlur={e => update({ value: e.currentTarget.textContent ?? '' })}
       >{el.value}</span>
-      <span className="grab" aria-hidden="true"><IconMove size={11} strokeWidth={2.6} /></span>
+      <span className="grab" aria-hidden="true"><IconMove size={ICON} strokeWidth={ICON_STROKE} /></span>
       <button
         className="remove"
         aria-label={`Remover ${el.label}`}
         onPointerDown={e => e.stopPropagation()}
         onClick={() => setElements(els => els.filter(e => e.id !== el.id))}
-      ><IconX size={11} strokeWidth={2.6} /></button>
+      ><IconX size={ICON} strokeWidth={ICON_STROKE} /></button>
     </div>
   )
 }
