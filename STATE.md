@@ -109,6 +109,19 @@
 - Verificado no navegador que a única requisição com a foto é o próprio `blob:` — leitura da memória do navegador, não rede.
 - 78 testes, bundle 76,5 → 77,2 kB gzip.
 
+## Sessão 11 (2026-07-30) — link curto e outras modalidades
+
+- **Link curto (`strava.app.link`) agora funciona.** O navegador não resolve sozinho: é deep link do Branch e não devolve CORS, então o `fetch` é bloqueado. Quem segue o redirect é o serverless novo `api/strava-resolve.js`.
+  - **Allowlist estrita de host** nesse endpoint: ele busca uma URL que veio do usuário, e sem isso viraria proxy pra qualquer destino (inclusive metadata interna). Coberto por teste com host parecido, sem TLS e IP de metadata.
+  - Ele tenta o id na URL final **e** no corpo, porque o Branch às vezes responde página em vez de redirect, dependendo do User-Agent.
+- `parseActivityUrl` ficou tolerante: com/sem protocolo, com `www`, com sufixo `/overview`, com query, com espaço em volta, id solto, e caixa alta.
+- **Atividade sem mapa deixou de ser erro.** Musculação, yoga e esteira têm dados mas não têm traçado — antes o app recusava com "Essa atividade não tem mapa". Agora importa os dados e usa a **forma da modalidade** no lugar do traçado (`SPORT_SHAPE` liga o `sport_type` do Strava às 15 formas).
+- **Métricas novas:** FC média e máxima, calorias, esforço relativo, potência e cadência. Tudo condicional, porque as modalidades divergem: emitir `0,00 km` numa musculação seria ruído.
+- **Ritmo por modalidade:** pedal em km/h, natação por 100 m, resto em min/km. Pace de bicicleta em min/km não é leitura de ninguém.
+- Slots de estatística passaram de 5 pra 8, em duas colunas — as métricas novas não cabiam numa coluna só.
+- `allowJs` no tsconfig pra o teste conseguir importar o handler serverless, que é JS puro.
+- 94 testes, bundle 77,2 → 78,2 kB gzip.
+
 ## Pendências
 
 - [x] Revisar spec de design — resolvido 2026-07-23 (aprovação delegada, session 2)

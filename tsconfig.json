@@ -4,6 +4,8 @@
     "lib": ["ES2021", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "bundler",
+    // o teste do endpoint importa api/*.js, que é serverless em JS puro
+    "allowJs": true,
     "jsx": "react-jsx",
     "strict": true,
     "skipLibCheck": true,
