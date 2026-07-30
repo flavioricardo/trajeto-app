@@ -142,14 +142,18 @@ function RouteBoxEl({ containerRef }: { containerRef: React.RefObject<HTMLDivEle
               stroke={paintOf(l.paint, style.routeColor, style.textColor)}
               strokeWidth={style.strokeWidth * toBox * l.width}
               strokeLinejoin="round"
-              strokeLinecap="round"
+              // Ponta reta quando há corrosão: a arredondada avança meia espessura
+              // além de cada traço e fecharia as lacunas num traço grosso.
+              strokeLinecap={l.dash ? 'butt' : 'round'}
               opacity={l.opacity}
               filter={l.glow ? `url(#glow-${i})` : undefined}
               transform={l.dx || l.dy ? `translate(${(l.dx ?? 0) * toBox} ${(l.dy ?? 0) * toBox})` : undefined}
               {...(l.dash
                 ? {
-                    strokeDasharray: l.dash.map(v => v * toBox).join(' '),
-                    strokeDashoffset: (l.dashOffset ?? 0) * toBox,
+                    // dash é múltiplo da espessura da camada, então acompanha o
+                    // controle de traço em vez de virar conta de colar.
+                    strokeDasharray: l.dash.map(v => v * style.strokeWidth * l.width * toBox).join(' '),
+                    strokeDashoffset: (l.dashOffset ?? 0) * style.strokeWidth * l.width * toBox,
                   }
                 : { pathLength: 100, strokeDasharray: 100, strokeDashoffset: 100 })}
             />
