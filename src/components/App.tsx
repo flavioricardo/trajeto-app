@@ -1,14 +1,15 @@
 import { useState } from 'react'
-import { useAtom, useAtomValue } from 'jotai'
+import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import EditorCanvas from './EditorCanvas'
 import RouteSource from './RouteSource'
 import StravaPanel from './StravaPanel'
 import {
   presetAtom, PRESETS, Preset, styleAtom, elementsAtom, newStat,
-  routeAtom, routeBoxAtom,
+  routeAtom, routeBoxAtom, themeAtom,
 } from '../state'
 import { OVERLAY_FONTS, OverlayFont } from '../fonts'
 import { renderOverlay } from '../lib/export'
+import { THEMES, Theme, themeById } from '../lib/themes'
 import { IconPlus, IconDownload } from './icons'
 
 export default function App() {
@@ -20,6 +21,7 @@ export default function App() {
         <StravaPanel />
         <RouteSource />
         <StatsPanel />
+        <ThemePanel />
         <StylePanel />
       </main>
       <ExportBar />
@@ -71,6 +73,33 @@ function StatsPanel() {
   )
 }
 
+function ThemePanel() {
+  const [theme, setTheme] = useAtom(themeAtom)
+  const setStyle = useSetAtom(styleAtom)
+  const current = themeById(theme)
+
+  // Escolher o tema troca a paleta e a fonte; os controles de Estilo seguem
+  // valendo pra ajustar depois, e as camadas do tema acompanham a cor nova.
+  const pick = (t: Theme) => {
+    setTheme(t.id)
+    setStyle(s => ({ ...s, ...t.palette }))
+  }
+
+  return (
+    <section className="card">
+      <h2>Tema</h2>
+      <div className="shape-grid">
+        {THEMES.map(t => (
+          <button key={t.id} className="btn" aria-pressed={t.id === theme} onClick={() => pick(t)}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+      <p className="hint">{current.hint}</p>
+    </section>
+  )
+}
+
 function StylePanel() {
   const [style, setStyle] = useAtom(styleAtom)
   return (
@@ -110,13 +139,14 @@ function ExportBar() {
   const route = useAtomValue(routeAtom)
   const routeBox = useAtomValue(routeBoxAtom)
   const style = useAtomValue(styleAtom)
+  const theme = themeById(useAtomValue(themeAtom))
   const [busy, setBusy] = useState(false)
 
   const doExport = async () => {
     setBusy(true)
     try {
       const size = PRESETS[preset]
-      const blob = await renderOverlay({ elements, route, routeBox, style }, size)
+      const blob = await renderOverlay({ elements, route, routeBox, style, theme }, size)
       const file = new File([blob], `trajeto-${preset}.png`, { type: 'image/png' })
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file] }).catch(() => {})
