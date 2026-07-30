@@ -1,5 +1,6 @@
 import { atom } from 'jotai'
 import { Pt } from './lib/geo'
+import { ImportKind, ImportResult } from './lib/strava'
 import { OverlayFont } from './fonts'
 
 export type Preset = 'story' | 'feed'
@@ -17,6 +18,9 @@ export const presetAtom = atom<Preset>('story')
 export const routeAtom = atom<Pt[] | null>(null)
 export const routeBoxAtom = atom<RouteBox>({ x: 15, y: 8, size: 70 })
 export const styleAtom = atom<Style>({ routeColor: '#FF4D12', textColor: '#FFFFFF', font: 'Archivo Black', strokeWidth: 1.2 })
+
+/** Última importação de cada tipo, pra poder cruzar o previsto da rota com o feito da atividade. */
+export const importsAtom = atom<Partial<Record<ImportKind, ImportResult>>>({})
 
 let nextId = 1
 export const newStat = (label: string, value: string, x = 8, y = 62): StatElement => ({ id: String(nextId++), label, value, x, y })

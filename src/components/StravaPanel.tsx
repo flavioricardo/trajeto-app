@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { useSetAtom } from 'jotai'
-import { routeAtom, elementsAtom, newStat } from '../state'
+import { useAtom, useAtomValue, useSetAtom } from 'jotai'
+import { routeAtom, elementsAtom, importsAtom, newStat, StatElement } from '../state'
 import { normalizePoints } from '../lib/geo'
-import { formatDistance, formatDuration, formatPace } from '../lib/format'
+import { statsFor, plannedVsActual, StatSeed } from '../lib/stats'
+import { formatDistance } from '../lib/format'
 import {
   StravaToken, ImportResult, parseActivityUrl, getActivity, listRoutes, exploreSegments,
 } from '../lib/strava'
@@ -93,40 +94,77 @@ export default function StravaPanel() {
   )
 }
 
+/** O que aproveitar da importação: tudo, só a geometria ou só as estatísticas. */
+type ApplyMode = 'all' | 'shape' | 'stats'
+
+const STAT_SLOTS = [[8, 56], [8, 70], [55, 56], [55, 70], [8, 84]] as const
+
+/** Acrescenta o cruzamento sem tocar no resto do quadro, substituindo uma versão anterior dele. */
+function withCross(els: StatElement[], cross: StatSeed): StatElement[] {
+  const rest = els.filter(e => e.label !== cross.label)
+  const [x, y] = STAT_SLOTS[Math.min(rest.length, STAT_SLOTS.length - 1)]
+  return [...rest, newStat(cross.label, cross.value, x, y)]
+}
+
 function useApplyImport() {
   const setRoute = useSetAtom(routeAtom)
   const setElements = useSetAtom(elementsAtom)
-  return (r: ImportResult): boolean => {
-    const km = formatDistance(r.distanceM)
-    const ok = window.confirm(`Importar "${r.name}" (${km})? Isso substitui a rota e os dados atuais do quadro.`)
-    if (!ok) return false
-    setRoute(normalizePoints(r.points))
-    const els = [newStat('Distância', km, 8, 56)]
-    if (r.durationS) els.push(newStat('Tempo', formatDuration(r.durationS), 8, 70))
-    if (r.gainM != null) els.push(newStat('Elevação', `${Math.round(r.gainM)} m`, 55, 56))
-    if (r.durationS) els.push(newStat('Pace', formatPace(r.distanceM, r.durationS), 55, 70))
-    setElements(els)
-    return true
+  const [imports, setImports] = useAtom(importsAtom)
+
+  return (r: ImportResult, mode: ApplyMode) => {
+    if (mode !== 'stats') setRoute(normalizePoints(r.points))
+
+    // Guarda por tipo pra cruzar previsto (rota) com feito (atividade), em qualquer ordem de importação.
+    const next = { ...imports, [r.kind]: r }
+    setImports(next)
+    const cross = plannedVsActual(next.route, next.activity)
+
+    // Só o traçado não mexe nos números, mas pode ter destravado o cruzamento: ele entra como dado novo.
+    if (mode === 'shape') {
+      if (cross) setElements(els => withCross(els, cross))
+      return
+    }
+
+    const seeds = statsFor(r)
+    if (cross) seeds.push(cross)
+    setElements(
+      seeds.slice(0, STAT_SLOTS.length).map((s, i) => newStat(s.label, s.value, STAT_SLOTS[i][0], STAT_SLOTS[i][1])),
+    )
   }
 }
 
 function Connected({ freshToken, athleteId }: { freshToken: () => Promise<string>; athleteId?: number }) {
   const apply = useApplyImport()
+  const route = useAtomValue(routeAtom)
+  const elements = useAtomValue(elementsAtom)
   const [link, setLink] = useState('')
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
   const [options, setOptions] = useState<ImportResult[]>([])
   const [optionsLabel, setOptionsLabel] = useState('')
+  const [pending, setPending] = useState<ImportResult | null>(null)
+
+  /** Quadro vazio não tem o que mesclar: importa direto. Caso contrário pergunta o que aproveitar. */
+  const offer = (r: ImportResult) => {
+    if (!route && elements.length === 0) apply(r, 'all')
+    else setPending(r)
+  }
+
+  const resolve = (mode: ApplyMode) => {
+    if (pending) apply(pending, mode)
+    setPending(null)
+    setOptions([])
+  }
 
   const run = async (what: string, fn: () => Promise<void>) => {
-    setBusy(what); setError(''); setOptions([])
+    setBusy(what); setError(''); setOptions([]); setPending(null)
     try { await fn() } catch (e) { setError(e instanceof Error ? e.message : 'Deu erro') } finally { setBusy('') }
   }
 
   const importLink = () => run('link', async () => {
     const id = parseActivityUrl(link)
     if (!id) throw new Error('Cole um link no formato strava.com/activities/…')
-    apply(await getActivity(id, await freshToken()))
+    offer(await getActivity(id, await freshToken()))
   })
 
   const loadRoutes = () => run('routes', async () => {
@@ -177,13 +215,28 @@ function Connected({ freshToken, athleteId }: { freshToken: () => Promise<string
           </button>
         </div>
       </div>
+      {pending && (
+        <div className="field" style={{ marginTop: 12 }}>
+          <label>{pending.name} · {formatDistance(pending.distanceM)}</label>
+          <div className="row">
+            <button className="btn" onClick={() => resolve('all')}>Substituir tudo</button>
+            <button className="btn" onClick={() => resolve('shape')}>Só o traçado</button>
+            <button className="btn" onClick={() => resolve('stats')}>Só os números</button>
+            <button className="btn" onClick={() => setPending(null)}>Cancelar</button>
+          </div>
+          <p className="hint">
+            Pra juntar os dois: importe a atividade e depois a rota com "Só o traçado". O desenho fica o da
+            rota planejada e os números seguem os da sua atividade.
+          </p>
+        </div>
+      )}
       {options.length > 0 && (
         <div className="field">
           <label>{optionsLabel}</label>
           <ul className="suggest">
             {options.map((o, i) => (
               <li key={i}>
-                <button onClick={() => { if (apply(o)) setOptions([]) }}>
+                <button onClick={() => offer(o)}>
                   {o.name} · {formatDistance(o.distanceM)}
                 </button>
               </li>

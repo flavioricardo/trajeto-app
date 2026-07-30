@@ -10,6 +10,13 @@ export function formatDuration(s: number): string {
   return h > 0 ? `${h}h ${m}m` : `${m}m`
 }
 
+/** Quanto o tempo real ficou abaixo (−) ou acima (+) do previsto pela rota. */
+export function formatDelta(estimatedS: number, actualS: number): string {
+  const min = Math.round((actualS - estimatedS) / 60)
+  if (min === 0) return 'no previsto'
+  return `${min < 0 ? '−' : '+'}${Math.abs(min)} min`
+}
+
 export function formatPace(distanceM: number, durationS: number): string {
   const secPerKm = durationS / (distanceM / 1000)
   const min = Math.floor(secPerKm / 60)
