@@ -79,6 +79,17 @@
 - **Custo:** bundle de 60,0 → 74,5 kB gzip. Se apertar, o passo de amostragem (`STEP` no gerador) é a alavanca — 0,45 hoje.
 - Armadilha registrada: um `path` pode ter subcaminhos soltos (o `ThumbsDown` do Feather tem), e `getPointAtLength` os percorre em sequência. O gerador corta onde a distância entre amostras vizinhas estoura o passo, senão sai um risco ligando polegar e punho.
 
+## Sessão 9 (2026-07-30) — temas
+
+- **Temas pintam o conteúdo do quadro**: Nenhum, 3D, Medieval, Futurista e Fofo. Escolher um tema aplica paleta e fonte no `styleAtom`, então os controles de Estilo seguem valendo pra ajustar depois.
+- **Traço em camadas** (`RouteLayer[]`, de baixo pra cima). É o que permite extrusão 3D (cópias deslocadas), contorno (camada grossa embaixo) e néon (halo largo + núcleo fino). As camadas usam tokens (`route`, `routeDark`, `routeLight`), então acompanham a cor que o usuário escolher em vez de travar numa cor do tema.
+- **Toda medida do tema é % da largura do quadro.** No editor isso vira `cqw` (o `.editor` declara `container-type: inline-size`) e unidades de viewBox; no canvas vira pixel. É o que mantém editor e PNG iguais.
+- **Bug corrigido de quebra:** o editor usava fator fixo `1.4` pra espessura, que só batia com o export quando a caixa da rota estava no tamanho padrão. Agora converte por `100 / box.size`. Redimensionar a rota não desalinha mais editor e PNG.
+- **Armadilha achada comparando o PNG com o editor:** `-webkit-text-stroke` e `strokeText` **centram** o traço na letra. Eu tinha dobrado a largura no canvas, e o contorno saía 2× mais grosso no PNG. Só apareceu porque exportei e comparei — nenhum teste pegava.
+- **Hello Kitty ficou fora: marca registrada da Sanrio.** O tema kawaii é original (Fofo), sem personagem e sem o nome. Há teste que falha se "kitty" ou "sanrio" aparecer nos temas.
+- Fontes do Google não carregam neste sandbox (proxy bloqueia `fonts.googleapis.com`), então a troca de fonte por tema não aparece nas capturas daqui — mas o `font-family` computado muda, e em produção carrega.
+- 62 testes, bundle 74,5 → 75,9 kB gzip.
+
 ## Pendências
 
 - [x] Revisar spec de design — resolvido 2026-07-23 (aprovação delegada, session 2)

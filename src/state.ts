@@ -19,6 +19,9 @@ export const routeAtom = atom<Trace | null>(null)
 export const routeBoxAtom = atom<RouteBox>({ x: 15, y: 8, size: 70 })
 export const styleAtom = atom<Style>({ routeColor: '#FF4D12', textColor: '#FFFFFF', font: 'Archivo Black', strokeWidth: 1.2 })
 
+/** Tema visual do conteúdo do quadro. Ver lib/themes. */
+export const themeAtom = atom<string>('plain')
+
 /** Guias de alinhamento visíveis durante o arrasto. Estado efêmero de UI, some ao soltar. */
 export const guidesAtom = atom<{ x: number | null; y: number | null }>({ x: null, y: null })
 

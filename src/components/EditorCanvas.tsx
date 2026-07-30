@@ -1,8 +1,9 @@
 import { useRef } from 'react'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
-import { presetAtom, routeAtom, routeBoxAtom, elementsAtom, styleAtom, guidesAtom, StatElement } from '../state'
+import { presetAtom, routeAtom, routeBoxAtom, elementsAtom, styleAtom, guidesAtom, themeAtom, StatElement } from '../state'
 import { useDrag, clamp } from './useDrag'
 import { snapTo, CANVAS_TARGETS } from '../lib/guides'
+import { Theme, themeById, paintOf } from '../lib/themes'
 import { IconResize, IconX, IconMove } from './icons'
 
 /** Controles do canvas: mesmo tamanho nos três, e a espessura padrão do Feather. */
@@ -81,6 +82,7 @@ function RouteBoxEl({ containerRef }: { containerRef: React.RefObject<HTMLDivEle
   const [box, setBox] = useAtom(routeBoxAtom)
   const elements = useAtomValue(elementsAtom)
   const style = useAtomValue(styleAtom)
+  const theme = themeById(useAtomValue(themeAtom))
 
   const drag = useSnapDrag(
     containerRef,
@@ -93,6 +95,11 @@ function RouteBoxEl({ containerRef }: { containerRef: React.RefObject<HTMLDivEle
     (x, y) => setBox(b => ({ ...b, x, y })),
   )
   const resize = useDrag(containerRef, dx => setBox(b => ({ ...b, size: clamp(b.size + dx, 15, 140) })))
+
+  // As medidas do tema e da espessura são % da largura do quadro; o viewBox aqui
+  // são 100 unidades da largura da caixa. Converter mantém editor e PNG iguais —
+  // antes havia um fator fixo 1.4, que só batia com a caixa no tamanho padrão.
+  const toBox = 100 / box.size
 
   // Um subcaminho por parte solta da forma: a cabeça do corredor não pode ficar
   // ligada ao tronco por um risco.
@@ -109,18 +116,38 @@ function RouteBoxEl({ containerRef }: { containerRef: React.RefObject<HTMLDivEle
       {...drag}
     >
       <svg viewBox="0 0 100 100">
-        <path
-          className="route-path"
-          d={d}
-          fill="none"
-          stroke={style.routeColor}
-          strokeWidth={style.strokeWidth * 1.4}
-          strokeLinejoin="round"
-          strokeLinecap="round"
-          pathLength={100}
-          strokeDasharray={100}
-          strokeDashoffset={100}
-        />
+        <defs>
+          {theme.route.map((l, i) =>
+            l.glow ? (
+              <filter key={i} id={`glow-${i}`} x="-50%" y="-50%" width="200%" height="200%">
+                <feDropShadow
+                  dx="0"
+                  dy="0"
+                  stdDeviation={(l.glow.blur * toBox) / 2}
+                  floodColor={paintOf(l.glow.paint, style.routeColor, style.textColor)}
+                />
+              </filter>
+            ) : null,
+          )}
+        </defs>
+        {theme.route.map((l, i) => (
+          <path
+            key={i}
+            className="route-path"
+            d={d}
+            fill="none"
+            stroke={paintOf(l.paint, style.routeColor, style.textColor)}
+            strokeWidth={style.strokeWidth * toBox * l.width}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            opacity={l.opacity}
+            filter={l.glow ? `url(#glow-${i})` : undefined}
+            transform={l.dx || l.dy ? `translate(${(l.dx ?? 0) * toBox} ${(l.dy ?? 0) * toBox})` : undefined}
+            pathLength={100}
+            strokeDasharray={100}
+            strokeDashoffset={100}
+          />
+        ))}
       </svg>
       <span className="grab" aria-hidden="true"><IconMove size={ICON} strokeWidth={ICON_STROKE} /></span>
       <span
@@ -136,11 +163,31 @@ function RouteBoxEl({ containerRef }: { containerRef: React.RefObject<HTMLDivEle
   )
 }
 
+/**
+ * O tema mede em % da largura do quadro, e `cqw` é exatamente isso: o editor
+ * declara `container-type: inline-size`. Por isso o texto sai igual no PNG.
+ */
+function textCss(theme: Theme, routeColor: string, textColor: string): React.CSSProperties {
+  const css: React.CSSProperties = {}
+  const { outline, shadow } = theme.text
+  if (outline) {
+    css.WebkitTextStrokeWidth = `${outline.width}cqw`
+    css.WebkitTextStrokeColor = paintOf(outline.paint, routeColor, textColor)
+    css.paintOrder = 'stroke fill'
+  }
+  if (shadow) {
+    const c = paintOf(shadow.paint, routeColor, textColor)
+    css.textShadow = `${shadow.dx}cqw ${shadow.dy}cqw ${shadow.blur}cqw ${c}`
+  }
+  return css
+}
+
 function StatBlock({ el, containerRef }: { el: StatElement; containerRef: React.RefObject<HTMLDivElement | null> }) {
   const [elements, setElements] = useAtom(elementsAtom)
   const route = useAtomValue(routeAtom)
   const box = useAtomValue(routeBoxAtom)
   const style = useAtomValue(styleAtom)
+  const theme = themeById(useAtomValue(themeAtom))
 
   const drag = useSnapDrag(
     containerRef,
@@ -161,7 +208,13 @@ function StatBlock({ el, containerRef }: { el: StatElement; containerRef: React.
   return (
     <div
       className="draggable stat"
-      style={{ left: `${el.x}%`, top: `${el.y}%`, color: style.textColor, fontFamily: `'${style.font}', sans-serif` }}
+      style={{
+        left: `${el.x}%`,
+        top: `${el.y}%`,
+        color: style.textColor,
+        fontFamily: `'${style.font}', sans-serif`,
+        ...textCss(theme, style.routeColor, style.textColor),
+      }}
       tabIndex={0}
       {...drag}
     >
