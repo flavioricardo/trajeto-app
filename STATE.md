@@ -58,6 +58,15 @@
 - **Domínio principal mudou para `trajeto-app-fmeira.vercel.app`.** Isso quebra o OAuth do Strava se não for acompanhado: `StravaPanel` monta `redirect_uri` como `location.origin + location.pathname`, então o Authorization Callback Domain no Strava precisa bater com o domínio por onde o usuário entra. O valor registrado até aqui era `trajeto-app-flavioricardo91.vercel.app`.
 - **`/api/strava-config` ainda devolve `null` num deploy posterior a tudo** — ou seja, não é defasagem de env var: `STRAVA_CLIENT_ID` segue ausente ou não numérico na Vercel, e o secret novo do Strava ainda não foi gravado lá.
 
+## Sessão 7 (cont.) — cruzar rota com atividade
+
+- Importação do Strava deixou de substituir tudo. Com o quadro preenchido ela pergunta o que aproveitar: **Substituir tudo**, **Só o traçado** ou **Só os números** (fim do `window.confirm`). Quadro vazio importa direto.
+- Caso principal destravado: atividade primeiro (números reais), depois a rota com "Só o traçado" — desenho planejado, esforço real.
+- Estatística nova: rota traz `estimated_moving_time`, atividade traz `moving_time`, e a diferença vira `vs. previsto · −7 min`. `ImportResult` ganhou `kind` e `estimatedS`; `importsAtom` guarda a última importação por tipo, então a ordem de importação não importa.
+- **Armadilha registrada:** na primeira versão o modo "só o traçado" retornava antes de gravar a importação, e a rota nunca entregava o tempo previsto — o cruzamento morria justamente no fluxo desenhado pra ele. Só apareceu no teste de integração, não nos unitários. Nesse modo o dado agora entra sem derrubar os números existentes.
+- **Decisão de escopo:** sobrepor os dois traçados pra comparar aderência ficou de fora. Exigiria normalizar contra um bounding box comum (`normalizePoints` escala cada conjunto na própria caixa, então dois traçados quase idênticos sairiam desalinhados) e trocar `routeAtom`/`renderOverlay` pra coleção. É análise de treino, não overlay de story.
+- 28 testes (9 novos), build 59,4 kB gzip.
+
 ## Pendências
 
 - [x] Revisar spec de design — resolvido 2026-07-23 (aprovação delegada, session 2)
