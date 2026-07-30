@@ -51,6 +51,13 @@
 - **PAT `trajeto-push`:** encerrado por decisão do Flávio — os tokens estão perto da data de expiração e ele optou por deixar expirar em vez de revogar. Registrado como expiração, não revogação: o token mantém escrita até a data.
 - ⚠️ **Env var só vale a partir do próximo deploy.** A Vercel injeta as variáveis no build/deploy; mudá-las depois não afeta funções já publicadas. `/api/strava-config` continuava devolvendo `null` às 13:50 porque a produção era anterior à configuração. Qualquer troca de env var exige redeploy.
 
+## Sessão 7 (cont.) — app no ar público
+
+- **Deployment Protection desligada** (`ssoProtection.enabled = false`) com aprovação do Flávio, depois da rotação do secret. Fim do 403: `https://trajeto-app-fmeira.vercel.app/` responde 200 com o HTML do app, e `/api/strava-config` responde sem redirect de SSO.
+- **CI/CD por push validado de ponta a ponta:** o push do branch gerou preview (`dpl_91tWTYtKtM7UFUw5XhAVrWThEeBW`) e o merge em main gerou produção (`dpl_7K7BxJxt6MtvPNpBN5EWt5RKRxSy`), ambos READY, com `githubCommitRef` correto. Deploy manual por MCP não é mais necessário.
+- **Domínio principal mudou para `trajeto-app-fmeira.vercel.app`.** Isso quebra o OAuth do Strava se não for acompanhado: `StravaPanel` monta `redirect_uri` como `location.origin + location.pathname`, então o Authorization Callback Domain no Strava precisa bater com o domínio por onde o usuário entra. O valor registrado até aqui era `trajeto-app-flavioricardo91.vercel.app`.
+- **`/api/strava-config` ainda devolve `null` num deploy posterior a tudo** — ou seja, não é defasagem de env var: `STRAVA_CLIENT_ID` segue ausente ou não numérico na Vercel, e o secret novo do Strava ainda não foi gravado lá.
+
 ## Pendências
 
 - [x] Revisar spec de design — resolvido 2026-07-23 (aprovação delegada, session 2)
@@ -60,10 +67,10 @@
 - [x] Deploy Vercel — resolvido 2026-07-23 via MCP `deploy_to_vercel`, build ok (session 2)
 - [x] Rotacionar client secret do Strava — resolvido 2026-07-30 (session 7), secret novo gerado. Invalida o vazamento da session 5.
 - [x] Conectar o repo GitHub na Vercel — resolvido 2026-07-30 (session 7). Deploy por push, sem mais MCP manual.
-- [ ] Desligar a Deployment Protection — https://vercel.com/flavioricardo91/trajeto-app/settings/deployment-protection (Vercel Authentication → Disabled)
-      | Blocks: acesso público — `ssoProtection.enabled = true` confirmado por API em 2026-07-30, então o app segue fechado (SSO) em todos os domínios `.vercel.app`.
-      | Open since: 2026-07-23 (session 2). O bloqueio de segurança que segurava essa ação (secret não rotacionado) caiu com a rotação de 2026-07-30.
-- [ ] Conferir STRAVA_CLIENT_ID e STRAVA_CLIENT_SECRET na Vercel e **redeployar** — https://vercel.com/flavioricardo91/trajeto-app/settings/environment-variables (Authorization Callback Domain no Strava: trajeto-app-flavioricardo91.vercel.app)
-      | Blocks: botão Conectar com Strava funcionar. `/api/strava-config` devolvia `{"clientId":null}` às 13:50 de 2026-07-30 — env var ausente **ou** produção anterior à configuração, porque env var só entra em vigor no deploy seguinte.
-      | Como validar: abrir `/api/strava-config` depois do redeploy. Tem que vir um número no `clientId`; `null` significa que o CLIENT_ID não é numérico (o guard rejeita) ou não está setado.
+- [x] Desligar a Deployment Protection — resolvido 2026-07-30 (session 7), `ssoProtection.enabled = false`. App público em https://trajeto-app-fmeira.vercel.app/ (200 verificado). Aberta desde 2026-07-23, 5 sessões.
+- [ ] Gravar STRAVA_CLIENT_ID (numérico) e STRAVA_CLIENT_SECRET (o novo) na Vercel — https://vercel.com/flavioricardo91/trajeto-app/settings/environment-variables — **e** apontar o Authorization Callback Domain para `trajeto-app-fmeira.vercel.app` — https://www.strava.com/settings/api
+      | Blocks: botão Conectar com Strava. Confirmado em 2026-07-30 que `/api/strava-config` devolve `null` num deploy posterior à rotação, então não é defasagem de deploy: as duas variáveis não estão gravadas na Vercel.
+      | Por que o callback mudou: o app passou a rodar em `trajeto-app-fmeira.vercel.app` e o `redirect_uri` é montado a partir do `location.origin`. Se o domínio do Strava não bater com aquele por onde o usuário entra, o OAuth é recusado.
+      | Depois de gravar: as env vars só valem no deploy seguinte. Com o Git conectado, qualquer push em main já republica.
+      | Como validar: abrir https://trajeto-app-fmeira.vercel.app/api/strava-config — tem que vir um número no `clientId`. `null` = ausente ou não numérico (o guard rejeita).
       | Open since: 2026-07-24 (session 4)
