@@ -1,13 +1,15 @@
 import { useRef } from 'react'
-import { useAtom, useAtomValue } from 'jotai'
-import { presetAtom, routeAtom, routeBoxAtom, elementsAtom, styleAtom, StatElement } from '../state'
+import { useAtom, useAtomValue, useSetAtom } from 'jotai'
+import { presetAtom, routeAtom, routeBoxAtom, elementsAtom, styleAtom, guidesAtom, StatElement } from '../state'
 import { useDrag, clamp } from './useDrag'
-import { IconResize, IconX } from './icons'
+import { snapTo, CANVAS_TARGETS } from '../lib/guides'
+import { IconResize, IconX, IconMove } from './icons'
 
 export default function EditorCanvas() {
   const preset = useAtomValue(presetAtom)
   const route = useAtomValue(routeAtom)
   const elements = useAtomValue(elementsAtom)
+  const guides = useAtomValue(guidesAtom)
   const ref = useRef<HTMLDivElement>(null)
 
   return (
@@ -17,6 +19,12 @@ export default function EditorCanvas() {
         {elements.map(el => (
           <StatBlock key={el.id} el={el} containerRef={ref} />
         ))}
+        {guides.x != null && (
+          <div className="guide guide-v" style={{ left: `${guides.x}%` }} data-testid="guide-v" />
+        )}
+        {guides.y != null && (
+          <div className="guide guide-h" style={{ top: `${guides.y}%` }} data-testid="guide-h" />
+        )}
         {!route && elements.length === 0 && (
           <p className="editor-empty">Escolha a rota nas abas abaixo. Depois arraste cada item pra posicionar.</p>
         )}
@@ -25,12 +33,60 @@ export default function EditorCanvas() {
   )
 }
 
+/**
+ * Arrasto que gruda nas guias de alinhamento.
+ *
+ * A posição livre fica num ref à parte: aplicar o delta em cima do valor já
+ * encaixado prenderia o elemento no alvo, porque cada pointermove sozinho
+ * costuma andar menos que o limiar de encaixe.
+ */
+function useSnapDrag(
+  containerRef: React.RefObject<HTMLDivElement | null>,
+  current: () => { x: number; y: number },
+  targets: () => { x: number[]; y: number[] },
+  bounds: { min: number; max: number },
+  commit: (x: number, y: number) => void,
+) {
+  const raw = useRef<{ x: number; y: number } | null>(null)
+  const setGuides = useSetAtom(guidesAtom)
+
+  return useDrag(
+    containerRef,
+    (dx, dy) => {
+      const base = raw.current ?? current()
+      const free = {
+        x: clamp(base.x + dx, bounds.min, bounds.max),
+        y: clamp(base.y + dy, bounds.min, bounds.max),
+      }
+      raw.current = free
+      const t = targets()
+      const x = snapTo(free.x, t.x)
+      const y = snapTo(free.y, t.y)
+      setGuides({ x: x.guide, y: y.guide })
+      commit(x.value, y.value)
+    },
+    () => {
+      raw.current = null
+      setGuides({ x: null, y: null })
+    },
+  )
+}
+
 function RouteBoxEl({ containerRef }: { containerRef: React.RefObject<HTMLDivElement | null> }) {
   const route = useAtomValue(routeAtom)!
   const [box, setBox] = useAtom(routeBoxAtom)
+  const elements = useAtomValue(elementsAtom)
   const style = useAtomValue(styleAtom)
-  const drag = useDrag(containerRef, (dx, dy) =>
-    setBox(b => ({ ...b, x: clamp(b.x + dx, -20, 100), y: clamp(b.y + dy, -20, 100) })),
+
+  const drag = useSnapDrag(
+    containerRef,
+    () => box,
+    () => ({
+      x: [...CANVAS_TARGETS, ...elements.map(e => e.x)],
+      y: [...CANVAS_TARGETS, ...elements.map(e => e.y)],
+    }),
+    { min: -20, max: 100 },
+    (x, y) => setBox(b => ({ ...b, x, y })),
   )
   const resize = useDrag(containerRef, dx => setBox(b => ({ ...b, size: clamp(b.size + dx, 15, 140) })))
 
@@ -58,6 +114,7 @@ function RouteBoxEl({ containerRef }: { containerRef: React.RefObject<HTMLDivEle
           strokeDashoffset={100}
         />
       </svg>
+      <span className="grab" aria-hidden="true"><IconMove size={12} strokeWidth={2.4} /></span>
       <span
         className="resize"
         role="slider"
@@ -72,10 +129,23 @@ function RouteBoxEl({ containerRef }: { containerRef: React.RefObject<HTMLDivEle
 }
 
 function StatBlock({ el, containerRef }: { el: StatElement; containerRef: React.RefObject<HTMLDivElement | null> }) {
-  const [, setElements] = useAtom(elementsAtom)
+  const [elements, setElements] = useAtom(elementsAtom)
+  const route = useAtomValue(routeAtom)
+  const box = useAtomValue(routeBoxAtom)
   const style = useAtomValue(styleAtom)
-  const drag = useDrag(containerRef, (dx, dy) =>
-    setElements(els => els.map(e => (e.id === el.id ? { ...e, x: clamp(e.x + dx, 0, 95), y: clamp(e.y + dy, 0, 95) } : e))),
+
+  const drag = useSnapDrag(
+    containerRef,
+    () => el,
+    () => {
+      const others = elements.filter(e => e.id !== el.id)
+      return {
+        x: [...CANVAS_TARGETS, ...others.map(e => e.x), ...(route ? [box.x] : [])],
+        y: [...CANVAS_TARGETS, ...others.map(e => e.y), ...(route ? [box.y] : [])],
+      }
+    },
+    { min: 0, max: 95 },
+    (x, y) => setElements(els => els.map(e => (e.id === el.id ? { ...e, x, y } : e))),
   )
   const update = (patch: Partial<StatElement>) =>
     setElements(els => els.map(e => (e.id === el.id ? { ...e, ...patch } : e)))
@@ -101,6 +171,7 @@ function StatBlock({ el, containerRef }: { el: StatElement; containerRef: React.
         suppressContentEditableWarning
         onBlur={e => update({ value: e.currentTarget.textContent ?? '' })}
       >{el.value}</span>
+      <span className="grab" aria-hidden="true"><IconMove size={11} strokeWidth={2.6} /></span>
       <button
         className="remove"
         aria-label={`Remover ${el.label}`}

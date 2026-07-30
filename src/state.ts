@@ -19,6 +19,9 @@ export const routeAtom = atom<Pt[] | null>(null)
 export const routeBoxAtom = atom<RouteBox>({ x: 15, y: 8, size: 70 })
 export const styleAtom = atom<Style>({ routeColor: '#FF4D12', textColor: '#FFFFFF', font: 'Archivo Black', strokeWidth: 1.2 })
 
+/** Guias de alinhamento visíveis durante o arrasto. Estado efêmero de UI, some ao soltar. */
+export const guidesAtom = atom<{ x: number | null; y: number | null }>({ x: null, y: null })
+
 /** Última importação de cada tipo, pra poder cruzar o previsto da rota com o feito da atividade. */
 export const importsAtom = atom<Partial<Record<ImportKind, ImportResult>>>({})
 

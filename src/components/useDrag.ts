@@ -7,6 +7,7 @@ import { useRef } from 'react'
 export function useDrag(
   containerRef: React.RefObject<HTMLElement | null>,
   onMove: (dxPct: number, dyPct: number) => void,
+  onEnd?: () => void,
 ) {
   const last = useRef<{ x: number; y: number } | null>(null)
 
@@ -25,6 +26,7 @@ export function useDrag(
     },
     onPointerUp() {
       last.current = null
+      onEnd?.()
     },
   }
 }
