@@ -1,6 +1,6 @@
 # STATE — Trajeto (trajeto-app)
 
-**Última sessão:** 2026-07-24 (session 3, cont.)
+**Última sessão:** 2026-07-30 (session 7)
 
 ## Estado atual
 
@@ -37,15 +37,23 @@
 - Incidente de configuração: STRAVA_CLIENT_ID foi preenchido com o valor do client secret e o endpoint público o expunha (mitigado: Deployment Protection ativa limitou o vazamento a usuários autenticados no projeto; guard deployado — strava-config só devolve valor numérico). Secret também está no histórico do chat e NÃO foi rotacionado. Deploy do guard: dpl_6UrXHsJ1JACdoLwBZHRGNDAb1cZp.
 - Confirmado por SSO redirect: Deployment Protection segue ATIVA (app inacessível ao público).
 
+## Sessão 7 (2026-07-30)
+
+- Ícones migrados de lucide-react para **Feather** (`react-feather`, MIT). `X`, `Plus` e `Download` são equivalentes diretos; `MoveDiagonal` virou `Maximize2` (handle de resize). Só `src/components/icons.tsx` mudou — os componentes importam tudo por lá. 19 testes, `tsc --noEmit` limpo, build 58,9 kB gzip.
+- PR #1 criado e mergeado por squash em main (`5e106ee`). Primeiro PR do repo.
+- Deploy de produção via MCP: `dpl_2jRwnrpJ3AYttSfWQf2AZi1MqG2F` (READY). A primeira tentativa (`dpl_B8AqBK…`) falhou com "Could not resolve ./styles.css" — `deploy_to_vercel` sobe uma árvore de arquivos explícita e o CSS ficou de fora. Ao deployar por MCP, conferir a lista contra `find src api -type f`.
+- Estado verificado por API nesta sessão: `ssoProtection.enabled = true` (deployments sem domínio próprio seguem fechados ao público) e `/api/strava-config` devolve `{"clientId":null}` (env var ausente ou ainda não numérica). Projeto Vercel continua sem link com o repo GitHub, então todo deploy é manual.
+
 ## Pendências
 
 - [x] Revisar spec de design — resolvido 2026-07-23 (aprovação delegada, session 2)
 - [x] Definir nome do produto — resolvido 2026-07-23: Traço (session 2)
 - [x] Criar repo GitHub `trajeto-app` e dar push — resolvido 2026-07-23 (session 2)
-- [ ] REVOGAR token PAT `trajeto-push` — ⚠️ **3+ sessões aberta, violando a regra das 2 sessões** — https://github.com/settings/personal-access-tokens
-      | Blocks: segurança — token com write vive no histórico do chat | Open since: 2026-07-23 (confirmada ainda aberta em 2026-07-28, session 6)
+- [ ] REVOGAR token PAT `trajeto-push` — ⚠️ **5 sessões aberta, violando a regra das 2 sessões** — https://github.com/settings/personal-access-tokens
+      | Blocks: segurança — token com write vive no histórico do chat | Open since: 2026-07-23 (confirmada ainda aberta em 2026-07-30, session 7)
 - [x] Deploy Vercel — resolvido 2026-07-23 via MCP `deploy_to_vercel`, build ok (session 2)
 - [ ] Configurar projeto na Vercel: desligar Deployment Protection E conectar o repo GitHub — https://vercel.com/flavioricardo91/trajeto-app/settings
-      | Blocks: acesso público (403) e CI/CD por push | Open since: 2026-07-23 (session 2)
+      | Blocks: acesso público (403) e CI/CD por push | Open since: 2026-07-23 (session 2; `ssoProtection.enabled = true` confirmado por API em 2026-07-30)
+      | ⚠️ Antes de desligar: a Deployment Protection foi o que conteve o vazamento do client secret (session 5) e o secret **não foi rotacionado**. Rotacionar no Strava antes de abrir ao público.
 - [ ] Registrar app no Strava e configurar env vars — https://www.strava.com/settings/api (Authorization Callback Domain: trajeto-app-flavioricardo91.vercel.app), depois STRAVA_CLIENT_ID e STRAVA_CLIENT_SECRET em https://vercel.com/flavioricardo91/trajeto-app/settings/environment-variables
-      | Blocks: botão Conectar com Strava funcionar | Open since: 2026-07-24 (session 4)
+      | Blocks: botão Conectar com Strava funcionar | Open since: 2026-07-24 (session 4; `/api/strava-config` devolvia `{"clientId":null}` em 2026-07-30)
