@@ -75,7 +75,8 @@ body {
 .draggable:focus-visible { outline: 2px dashed var(--accent); outline-offset: 4px; }
 
 .route-box { touch-action: none; }
-.route-box svg { display: block; width: 100%; height: 100%; overflow: visible; }
+/* Só o traçado, que é filho direto. Descendente pegaria os ícones das alças e os esticaria. */
+.route-box > svg { display: block; width: 100%; height: 100%; overflow: visible; }
 .route-box .resize {
   position: absolute;
   right: -8px;
@@ -107,9 +108,9 @@ body {
 /* Controles do canvas: fechar e arrastar, nos cantos de cima do bloco. */
 .stat .remove, .stat .grab, .route-box .grab {
   position: absolute;
-  top: -12px;
   width: 22px;
   height: 22px;
+  padding: 0; /* botão traz padding próprio e desloca o ícone do centro */
   border-radius: 50%;
   border: none;
   background: var(--ink);
@@ -118,12 +119,25 @@ body {
   display: none;
   place-items: center;
 }
-.stat .remove { right: -12px; }
-.stat .grab, .route-box .grab { left: -12px; cursor: grab; }
-.route-box .grab { top: -8px; left: -8px; }
+/* No bloco de dado os controles ficam acima, não sobre a quina: o texto começa
+   na quina e um badge ali comeria a primeira letra. Padding no bloco não serve,
+   porque o export desenha o texto na coordenada exata e sairia deslocado. */
+.stat .grab, .stat .remove { top: -26px; }
+.stat .grab { left: 0; cursor: grab; }
+.stat .remove { right: 0; }
+/* Na rota a quina é vazia, então o badge pode montar nela. */
+.route-box .grab { top: -8px; left: -8px; cursor: grab; }
 .stat:focus-within .remove, .stat:hover .remove,
 .stat:focus-within .grab, .stat:hover .grab,
 .route-box:focus-within .grab, .route-box:hover .grab { display: grid; }
+
+/* O ícone manda no próprio tamanho: nada de esticar pra caixa do controle. */
+.stat .remove svg, .stat .grab svg, .route-box .grab svg, .route-box .resize svg {
+  display: block;
+  width: auto;
+  height: auto;
+  overflow: visible;
+}
 
 /* Guias de alinhamento: aparecem só durante o arrasto. */
 .guide {
