@@ -120,21 +120,40 @@ const TECH: Theme = {
   text: { shadow: { paint: 'route', dx: 0, dy: 0, blur: 2.2 } },
 }
 
-// Kawaii original: rosa pastel com contorno branco grosso e manuscrita.
-// Nada de personagem: Hello Kitty é marca registrada da Sanrio.
+// Kawaii original: rosa pastel, contorno branco, brilho suave e letra
+// arredondada. Nada de personagem: Hello Kitty é marca registrada da Sanrio.
 const FOFO: Theme = {
   id: 'fofo',
   label: 'Fofo',
-  hint: 'Rosa pastel, contorno branco e letra manuscrita.',
-  palette: { routeColor: '#FF7EB6', textColor: '#FFFFFF', font: 'Caveat', strokeWidth: 1.8 },
+  hint: 'Rosa pastel com brilho, contorno branco e letra arredondada.',
+  palette: { routeColor: '#FF7EB6', textColor: '#FFFFFF', font: 'Fredoka', strokeWidth: 1.8 },
   route: [
+    { paint: 'route', width: 2.4, opacity: 0.4, glow: { paint: 'route', blur: 2.8 } },
     { paint: '#FFFFFF', width: 1.9 },
     { paint: 'route', width: 1 },
     { paint: 'routeLight', width: 0.28, dy: -0.25, opacity: 0.85 },
   ],
-  text: { outline: { paint: 'route', width: 0.7 } },
+  text: {
+    outline: { paint: 'route', width: 0.7 },
+    shadow: { paint: 'route', dx: 0, dy: 0, blur: 1.6 },
+  },
 }
 
-export const THEMES: Theme[] = [PLAIN, TRIDI, MEDIEVAL, TECH, FOFO]
+// Carimbo de borracha: tinta única, batida fora de registro e cobertura
+// irregular. A fonte condensada em caixa alta é metade da leitura.
+const CARIMBO: Theme = {
+  id: 'carimbo',
+  label: 'Carimbo',
+  hint: 'Tinta única batida fora de registro, em caixa alta condensada.',
+  palette: { routeColor: '#A8231B', textColor: '#A8231B', font: 'Bebas Neue', strokeWidth: 1.5 },
+  route: [
+    { paint: 'route', width: 1.3, opacity: 0.32, dx: 0.55, dy: 0.6 },
+    { paint: 'route', width: 1, opacity: 0.9 },
+    { paint: 'routeDark', width: 0.42, opacity: 0.35, dx: -0.16, dy: -0.16 },
+  ],
+  text: { shadow: { paint: 'route', dx: 0.22, dy: 0.24, blur: 0.35 } },
+}
+
+export const THEMES: Theme[] = [PLAIN, TRIDI, MEDIEVAL, TECH, FOFO, CARIMBO]
 
 export const themeById = (id: string): Theme => THEMES.find(t => t.id === id) ?? PLAIN

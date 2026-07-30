@@ -88,7 +88,9 @@
 - **Armadilha achada comparando o PNG com o editor:** `-webkit-text-stroke` e `strokeText` **centram** o traço na letra. Eu tinha dobrado a largura no canvas, e o contorno saía 2× mais grosso no PNG. Só apareceu porque exportei e comparei — nenhum teste pegava.
 - **Hello Kitty ficou fora: marca registrada da Sanrio.** O tema kawaii é original (Fofo), sem personagem e sem o nome. Há teste que falha se "kitty" ou "sanrio" aparecer nos temas.
 - Fontes do Google não carregam neste sandbox (proxy bloqueia `fonts.googleapis.com`), então a troca de fonte por tema não aparece nas capturas daqui — mas o `font-family` computado muda, e em produção carrega.
-- 62 testes, bundle 74,5 → 75,9 kB gzip.
+- **Sessão 9 (cont.):** Fofo trocou a Caveat pela **Fredoka** (fonte nova no app, arredondada — a lista não tinha nada de fato fofo) e ganhou halo de brilho no traço e no texto. Tema **Carimbo** entra: tinta única (texto na mesma cor do traço), batida deslocada e translúcida por cima, Bebas Neue condensada.
+- Armadilha do Fofo com contorno **e** brilho: no canvas a sombra ia no contorno e de novo no preenchimento, empilhando o brilho. O `text-shadow` do editor envolve o conjunto uma vez só, então a sombra agora acompanha só o contorno, que é a forma mais externa.
+- 65 testes, bundle 74,5 → 76,1 kB gzip.
 
 ## Pendências
 

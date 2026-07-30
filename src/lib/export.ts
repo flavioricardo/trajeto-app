@@ -74,23 +74,36 @@ export async function renderOverlay(state: RenderState, size: { w: number; h: nu
   for (const el of elements) {
     const x = (el.x / 100) * size.w
     const y = (el.y / 100) * size.h
+    const applyShadow = () => {
+      if (!shadow) return
+      ctx.shadowColor = ink(shadow.paint)
+      ctx.shadowOffsetX = pct(shadow.dx)
+      ctx.shadowOffsetY = pct(shadow.dy)
+      ctx.shadowBlur = pct(shadow.blur)
+    }
+    const clearShadow = () => {
+      ctx.shadowColor = 'transparent'
+      ctx.shadowOffsetX = ctx.shadowOffsetY = ctx.shadowBlur = 0
+    }
+
     const draw = (text: string, ty: number, alpha: number) => {
       ctx.save()
       ctx.globalAlpha = alpha
-      if (shadow) {
-        ctx.shadowColor = ink(shadow.paint)
-        ctx.shadowOffsetX = pct(shadow.dx)
-        ctx.shadowOffsetY = pct(shadow.dy)
-        ctx.shadowBlur = pct(shadow.blur)
-      }
       // Contorno primeiro e preenchimento por cima, igual ao paint-order do editor.
       // A largura não dobra: tanto -webkit-text-stroke quanto strokeText centram
       // o traço na letra, então metade fica pra fora nos dois.
       if (outline) {
+        // A sombra acompanha só o contorno, que é a forma mais externa. Repetir
+        // no preenchimento empilharia o brilho, e o text-shadow do editor
+        // envolve o conjunto uma vez só.
+        applyShadow()
         ctx.strokeStyle = ink(outline.paint)
         ctx.lineWidth = pct(outline.width)
         ctx.lineJoin = 'round'
         ctx.strokeText(text, x, ty)
+        clearShadow()
+      } else {
+        applyShadow()
       }
       ctx.fillStyle = style.textColor
       ctx.fillText(text, x, ty)

@@ -1,4 +1,5 @@
 import { THEMES, themeById, shade, paintOf } from '../src/lib/themes'
+import { OVERLAY_FONTS } from '../src/fonts'
 
 it('shade escurece e clareia, e ignora entrada inválida', () => {
   expect(shade('#808080', -1)).toBe('#000000')
@@ -39,6 +40,26 @@ it('o tema limpo não desenha efeito nenhum', () => {
   expect(plain.route).toHaveLength(1)
   expect(plain.route[0]).toEqual({ paint: 'route', width: 1 })
   expect(plain.text).toEqual({})
+})
+
+it('todo tema usa uma fonte que o app carrega', () => {
+  for (const t of THEMES) {
+    expect(OVERLAY_FONTS, t.id).toContain(t.palette.font)
+  }
+})
+
+it('o Fofo tem brilho no traço e no texto', () => {
+  const fofo = themeById('fofo')
+  expect(fofo.route.some(l => l.glow)).toBe(true)
+  expect(fofo.text.shadow?.blur).toBeGreaterThan(0)
+})
+
+it('o Carimbo é monocromático e bate fora de registro', () => {
+  const c = themeById('carimbo')
+  // tinta única: texto e traço na mesma cor
+  expect(c.palette.textColor).toBe(c.palette.routeColor)
+  // pelo menos uma camada deslocada e translúcida, que é a batida irregular
+  expect(c.route.some(l => (l.dx || l.dy) && (l.opacity ?? 1) < 1)).toBe(true)
 })
 
 it('nenhum tema traz o personagem da Sanrio', () => {
