@@ -104,21 +104,36 @@ body {
 .stat .value { display: block; font-weight: 700; }
 .stat [contenteditable] { outline: none; min-width: 2ch; }
 .stat [contenteditable]:focus { border-bottom: 1px dashed currentColor; user-select: text; }
-.stat .remove {
+/* Controles do canvas: fechar e arrastar, nos cantos de cima do bloco. */
+.stat .remove, .stat .grab, .route-box .grab {
   position: absolute;
   top: -12px;
-  right: -12px;
   width: 22px;
   height: 22px;
   border-radius: 50%;
   border: none;
   background: var(--ink);
   color: var(--paper);
-  font-size: 12px;
   line-height: 1;
   display: none;
+  place-items: center;
 }
-.stat:focus-within .remove, .stat:hover .remove { display: block; }
+.stat .remove { right: -12px; }
+.stat .grab, .route-box .grab { left: -12px; cursor: grab; }
+.route-box .grab { top: -8px; left: -8px; }
+.stat:focus-within .remove, .stat:hover .remove,
+.stat:focus-within .grab, .stat:hover .grab,
+.route-box:focus-within .grab, .route-box:hover .grab { display: grid; }
+
+/* Guias de alinhamento: aparecem só durante o arrasto. */
+.guide {
+  position: absolute;
+  background: var(--accent);
+  pointer-events: none;
+  z-index: 3;
+}
+.guide-v { top: 0; bottom: 0; width: 1px; }
+.guide-h { left: 0; right: 0; height: 1px; }
 
 .editor-empty {
   position: absolute;
