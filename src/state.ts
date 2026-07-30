@@ -1,5 +1,5 @@
 import { atom } from 'jotai'
-import { Pt } from './lib/geo'
+import { Trace } from './lib/geo'
 import { ImportKind, ImportResult } from './lib/strava'
 import { OverlayFont } from './fonts'
 
@@ -15,7 +15,7 @@ export type RouteBox = { x: number; y: number; size: number } // size = % da lar
 export type Style = { routeColor: string; textColor: string; font: OverlayFont; strokeWidth: number }
 
 export const presetAtom = atom<Preset>('story')
-export const routeAtom = atom<Pt[] | null>(null)
+export const routeAtom = atom<Trace | null>(null)
 export const routeBoxAtom = atom<RouteBox>({ x: 15, y: 8, size: 70 })
 export const styleAtom = atom<Style>({ routeColor: '#FF4D12', textColor: '#FFFFFF', font: 'Archivo Black', strokeWidth: 1.2 })
 

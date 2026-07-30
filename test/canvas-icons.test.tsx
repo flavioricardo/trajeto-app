@@ -8,7 +8,7 @@ import { routeAtom } from '../src/state'
 function WithRoute() {
   const setRoute = useSetAtom(routeAtom)
   useEffect(() => {
-    setRoute([{ x: 0.1, y: 0.1 }, { x: 0.9, y: 0.9 }])
+    setRoute([[{ x: 0.1, y: 0.1 }, { x: 0.9, y: 0.9 }]])
   }, [setRoute])
   return <App />
 }

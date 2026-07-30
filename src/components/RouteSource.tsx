@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useAtom, useSetAtom } from 'jotai'
 import { routeAtom, elementsAtom, newStat } from '../state'
 import { parseGpx, GpxStats } from '../lib/gpx'
-import { SHAPES } from '../lib/shapes'
+import { ACTIVITY_SHAPES, FUN_SHAPES } from '../lib/shapes'
 import { normalizePoints, totalDistance, LatLon } from '../lib/geo'
 import { searchPlaces, fetchRoute, Place } from '../lib/api'
 import { formatDistance, formatDuration, formatPace } from '../lib/format'
@@ -49,7 +49,7 @@ function GpxTab() {
     setError('')
     try {
       const { points, stats } = parseGpx(await file.text())
-      setRoute(normalizePoints(points))
+      setRoute([normalizePoints(points)])
       prefill(stats)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Arquivo GPX inválido')
@@ -120,7 +120,7 @@ function PlaceTab() {
       setError('Esse lugar ainda não tem traçado no OpenStreetMap')
       return
     }
-    setRoute(normalizePoints(p.shape))
+    setRoute([normalizePoints(p.shape)])
     if (p.linear) prefill({ distanceM: totalDistance(p.shape) })
   }
 
@@ -135,17 +135,27 @@ function PlaceTab() {
 
 function ShapesTab() {
   const [route, setRoute] = useAtom(routeAtom)
+  const groups = [
+    ['Modalidades', ACTIVITY_SHAPES],
+    ['Formas', FUN_SHAPES],
+  ] as const
+
   return (
     <div>
-      <div className="shape-grid">
-        {Object.entries(SHAPES).map(([name, pts]) => (
-          // Compara por referência: a forma escolhida é guardada como está, então
-          // rota vinda de GPX, Strava ou local não casa com nenhuma e nada fica marcado.
-          <button key={name} className="btn" aria-pressed={route === pts} onClick={() => setRoute(pts)}>
-            {name}
-          </button>
-        ))}
-      </div>
+      {groups.map(([title, shapes]) => (
+        <div className="field" key={title}>
+          <label>{title}</label>
+          <div className="shape-grid">
+            {Object.entries(shapes).map(([name, trace]) => (
+              // Compara por referência: a forma escolhida é guardada como está, então
+              // rota vinda de GPX, Strava ou local não casa com nenhuma e nada fica marcado.
+              <button key={name} className="btn" aria-pressed={route === trace} onClick={() => setRoute(trace)}>
+                {name}
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
       <p className="hint">A forma usa a mesma cor e espessura da rota.</p>
     </div>
   )
@@ -165,7 +175,7 @@ function AbTab() {
     setError('')
     try {
       const { points, distanceM, durationS } = await fetchRoute(a, b)
-      setRoute(normalizePoints(points as LatLon[]))
+      setRoute([normalizePoints(points as LatLon[])])
       prefill({ distanceM, durationS })
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Não deu pra traçar a rota')
