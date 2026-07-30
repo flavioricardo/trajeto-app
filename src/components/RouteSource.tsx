@@ -134,12 +134,16 @@ function PlaceTab() {
 }
 
 function ShapesTab() {
-  const setRoute = useSetAtom(routeAtom)
+  const [route, setRoute] = useAtom(routeAtom)
   return (
     <div>
       <div className="shape-grid">
         {Object.entries(SHAPES).map(([name, pts]) => (
-          <button key={name} className="btn" onClick={() => setRoute(pts)}>{name}</button>
+          // Compara por referência: a forma escolhida é guardada como está, então
+          // rota vinda de GPX, Strava ou local não casa com nenhuma e nada fica marcado.
+          <button key={name} className="btn" aria-pressed={route === pts} onClick={() => setRoute(pts)}>
+            {name}
+          </button>
         ))}
       </div>
       <p className="hint">A forma usa a mesma cor e espessura da rota.</p>
