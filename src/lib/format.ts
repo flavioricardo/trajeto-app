@@ -17,6 +17,20 @@ export function formatDelta(estimatedS: number, actualS: number): string {
   return `${min < 0 ? '−' : '+'}${Math.abs(min)} min`
 }
 
+/** Velocidade média em km/h — leitura de quem pedala, não pace. */
+export function formatSpeed(distanceM: number, durationS: number): string {
+  const kmh = distanceM / 1000 / (durationS / 3600)
+  return `${kmh.toFixed(1).replace('.', ',')} km/h`
+}
+
+/** Pace de natação: por 100 m, que é como a piscina mede. */
+export function formatSwimPace(distanceM: number, durationS: number): string {
+  const secPer100 = durationS / (distanceM / 100)
+  const min = Math.floor(secPer100 / 60)
+  const sec = Math.round(secPer100 % 60)
+  return `${min}'${String(sec).padStart(2, '0')}"/100m`
+}
+
 export function formatPace(distanceM: number, durationS: number): string {
   const secPerKm = durationS / (distanceM / 1000)
   const min = Math.floor(secPerKm / 60)

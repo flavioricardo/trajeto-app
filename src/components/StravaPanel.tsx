@@ -6,7 +6,10 @@ import { statsFor, plannedVsActual, StatSeed } from '../lib/stats'
 import { formatDistance } from '../lib/format'
 import {
   StravaToken, ImportResult, parseActivityUrl, getActivity, listRoutes, exploreSegments,
+  resolveShortLink, SPORT_SHAPE,
 } from '../lib/strava'
+import { SHAPES } from '../lib/shapes'
+import { Trace } from '../lib/geo'
 import { searchPlaces, Place } from '../lib/api'
 
 const STORAGE_KEY = 'trajeto_strava'
@@ -97,7 +100,17 @@ export default function StravaPanel() {
 /** O que aproveitar da importação: tudo, só a geometria ou só as estatísticas. */
 type ApplyMode = 'all' | 'shape' | 'stats'
 
-const STAT_SLOTS = [[8, 56], [8, 70], [55, 56], [55, 70], [8, 84]] as const
+// Duas colunas: as modalidades novas trazem frequência, calorias e esforço,
+// e a coluna única de antes não comportava.
+const STAT_SLOTS = [
+  [8, 44], [55, 44], [8, 58], [55, 58], [8, 72], [55, 72], [8, 86], [55, 86],
+] as const
+
+/** Forma que substitui o traçado quando a atividade não tem mapa. */
+function shapeFor(r: ImportResult): Trace | null {
+  const nome = r.sportType ? SPORT_SHAPE[r.sportType] : undefined
+  return nome ? SHAPES[nome] ?? null : null
+}
 
 /** Acrescenta o cruzamento sem tocar no resto do quadro, substituindo uma versão anterior dele. */
 function withCross(els: StatElement[], cross: StatSeed): StatElement[] {
@@ -112,7 +125,11 @@ function useApplyImport() {
   const [imports, setImports] = useAtom(importsAtom)
 
   return (r: ImportResult, mode: ApplyMode) => {
-    if (mode !== 'stats') setRoute([normalizePoints(r.points)])
+    if (mode !== 'stats') {
+      // Atividade sem mapa não fica sem desenho: entra a forma da modalidade.
+      const trace = r.points.length ? [normalizePoints(r.points)] : shapeFor(r)
+      if (trace) setRoute(trace)
+    }
 
     // Guarda por tipo pra cruzar previsto (rota) com feito (atividade), em qualquer ordem de importação.
     const next = { ...imports, [r.kind]: r }
@@ -162,8 +179,9 @@ function Connected({ freshToken, athleteId }: { freshToken: () => Promise<string
   }
 
   const importLink = () => run('link', async () => {
-    const id = parseActivityUrl(link)
-    if (!id) throw new Error('Cole um link no formato strava.com/activities/…')
+    const ref = parseActivityUrl(link)
+    if (!ref) throw new Error('Cole o link da atividade ou o link curto de compartilhar')
+    const id = ref.kind === 'id' ? ref.id : await resolveShortLink(ref.url)
     offer(await getActivity(id, await freshToken()))
   })
 
@@ -194,7 +212,7 @@ function Connected({ freshToken, athleteId }: { freshToken: () => Promise<string
       <div className="field">
         <label htmlFor="strava-link">Link da atividade</label>
         <input id="strava-link" type="text" inputMode="url" value={link}
-          placeholder="https://www.strava.com/activities/…"
+          placeholder="strava.com/activities/… ou strava.app.link/…"
           onChange={e => setLink(e.target.value)} />
       </div>
       <div className="row">
@@ -225,8 +243,11 @@ function Connected({ freshToken, athleteId }: { freshToken: () => Promise<string
             <button className="btn" onClick={() => setPending(null)}>Cancelar</button>
           </div>
           <p className="hint">
-            Pra juntar os dois: importe a atividade e depois a rota com "Só o traçado". O desenho fica o da
-            rota planejada e os números seguem os da sua atividade.
+            {pending.points.length === 0
+              ? shapeFor(pending)
+                ? `Essa atividade não tem traçado, então entra a forma da modalidade no lugar.`
+                : `Essa atividade não tem traçado. Use "Só os números" e escolha a forma na aba Rota.`
+              : 'Pra juntar os dois: importe a atividade e depois a rota com "Só o traçado". O desenho fica o da rota planejada e os números seguem os da sua atividade.'}
           </p>
         </div>
       )}
