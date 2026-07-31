@@ -188,6 +188,18 @@ function StylePanel() {
   )
 }
 
+/** Dispara o download do blob. */
+function baixar(blob: Blob, nome: string) {
+  const url = URL.createObjectURL(blob)
+  const link = Object.assign(document.createElement('a'), { href: url, download: nome })
+  // Alguns navegadores só disparam o clique com o elemento no documento.
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  // Revogar na hora corre com o download; soltar depois evita arquivo truncado.
+  setTimeout(() => URL.revokeObjectURL(url), 60_000)
+}
+
 function ExportBar() {
   const [preset, setPreset] = useAtom(presetAtom)
   const elements = useAtomValue(elementsAtom)
@@ -198,23 +210,33 @@ function ExportBar() {
   const photo = useAtomValue(photoAtom)
   const comFoto = useAtomValue(photoInExportAtom)
   const [busy, setBusy] = useState(false)
+  const [erro, setErro] = useState('')
 
   const doExport = async () => {
     setBusy(true)
+    setErro('')
     try {
       const size = PRESETS[preset]
       const img = photo && comFoto ? await loadImage(photo.url) : null
       const blob = await renderOverlay({ elements, route, routeBox, style, theme, photo: img }, size)
-      const ext = img ? 'jpg' : 'png'
-      const file = new File([blob], `trajeto-${preset}.${ext}`, { type: blob.type })
+      const nome = `trajeto-${preset}.${img ? 'jpg' : 'png'}`
+      const file = new File([blob], nome, { type: blob.type })
+
       if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file] }).catch(() => {})
-      } else {
-        const url = URL.createObjectURL(blob)
-        const link = Object.assign(document.createElement('a'), { href: url, download: file.name })
-        link.click()
-        URL.revokeObjectURL(url)
+        try {
+          await navigator.share({ files: [file] })
+          return
+        } catch (e) {
+          // Fechar a folha de compartilhamento é escolha do usuário: respeitar.
+          if (e instanceof DOMException && e.name === 'AbortError') return
+          // Qualquer outra falha cai pro download. A mais comum é a ativação do
+          // clique expirar enquanto o canvas renderiza, e antes disso ela sumia
+          // em silêncio: o botão voltava do "Gerando…" sem entregar arquivo.
+        }
       }
+      baixar(blob, nome)
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Não deu pra gerar a imagem')
     } finally {
       setBusy(false)
     }
@@ -230,8 +252,9 @@ function ExportBar() {
         ))}
       </div>
       <button className="btn primary" disabled={busy || (elements.length === 0 && !route)} onClick={doExport}>
-        {busy ? 'Gerando…' : <><IconDownload size={15} /> Salvar PNG</>}
+        {busy ? 'Gerando…' : <><IconDownload size={15} /> Salvar {photo && comFoto ? 'JPG' : 'PNG'}</>}
       </button>
+      {erro && <p className="error export-error" role="alert">{erro}</p>}
     </div>
   )
 }

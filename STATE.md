@@ -122,6 +122,16 @@
 - `allowJs` no tsconfig pra o teste conseguir importar o handler serverless, que é JS puro.
 - 94 testes, bundle 77,2 → 78,2 kB gzip.
 
+## Sessão 11 (cont.) — bug do download que sumia
+
+- **Sintoma:** botão piscava "Gerando…" e nenhum arquivo aparecia. O Flávio notou depois de remover a foto de fundo, mas a causa não é a foto.
+- **Causa:** `navigator.share(...).catch(() => {})` engolia toda falha e **não havia caminho alternativo**. O `share` exige ativação recente do clique, e ela expira enquanto o canvas renderiza 1080×1920 — aí rejeita com `NotAllowedError` e o app não fazia nada.
+- Não reproduz em Chromium headless, onde `canShare` é indefinido e o fluxo já ia pro download. Reproduzi injetando um `share` que rejeita, que é o comportamento do navegador real.
+- **Correção:** falha de share cai pro download. `AbortError` é exceção — fechar a folha de compartilhamento é escolha do usuário, e baixar seria atropelar.
+- Junto: erro de geração agora aparece na barra em vez de sumir; o link do download entra no documento antes do clique (navegador exige) e o object URL é revogado com atraso, porque revogar na hora corre com o download e trunca arquivo.
+- O rótulo do botão passa a dizer JPG quando é JPG que vai sair.
+- 99 testes, bundle 78,2 → 78,3 kB gzip.
+
 ## Pendências
 
 - [x] Revisar spec de design — resolvido 2026-07-23 (aprovação delegada, session 2)

@@ -284,6 +284,9 @@ select { padding: 9px 10px; border-radius: 10px; border: 1px solid var(--contour
   backdrop-filter: blur(8px);
   border-top: 1px solid var(--contour);
 }
+.export-bar { flex-wrap: wrap; }
+.export-error { flex-basis: 100%; margin: 0; text-align: center; }
+
 .preset-toggle { display: flex; gap: 4px; }
 .preset-toggle button {
   font: inherit;
