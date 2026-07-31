@@ -51,29 +51,24 @@ it('as camadas seguem a cor que o usuário escolher, não uma cor fixa', () => {
   expect(strokes.some(s => s?.toLowerCase().startsWith('#ff4d12'))).toBe(false)
 })
 
-it('a corrosão acompanha a espessura em vez de virar conta de colar', () => {
+it('camada vazada ganha máscara que abre o miolo do traço', () => {
   open()
   fireEvent.click(themeBtn('Carimbo'))
-  const dash = () => document.querySelector('.route-box path')!.getAttribute('stroke-dasharray')!.split(' ').map(Number)
 
-  const antes = dash()
-  fireEvent.change(screen.getByLabelText(/^Traço/), { target: { value: '1' } })
-  const depois = dash()
+  const paths = [...document.querySelectorAll('.route-box > svg > g path')]
+  expect(paths.length).toBeGreaterThan(0)
+  expect(paths.every(p => p.getAttribute('mask')?.startsWith('url(#hollow-'))).toBe(true)
 
-  // afinar o traço encolhe o padrão inteiro na mesma proporção: trecho de tinta
-  // da ordem da espessura vira quadradinho, e é isso que o teste impede
-  const razao = antes[0] / depois[0]
-  expect(razao).toBeGreaterThan(1)
-  expect(antes[1] / depois[1]).toBeCloseTo(razao, 6)
+  // a máscara é branca por fora e preta no miolo, e o miolo é mais fino
+  const mask = document.querySelector('.route-box mask')!
+  const [fora, miolo] = [...mask.querySelectorAll('path')].map(p => Number(p.getAttribute('stroke-width')))
+  expect(miolo).toBeLessThan(fora)
 })
 
-it('camada corroída usa ponta reta, senão a lacuna some', () => {
+it('tema sem vazado não ganha máscara', () => {
   open()
-  fireEvent.click(themeBtn('Carimbo'))
-  expect(document.querySelector('.route-box path')!.getAttribute('stroke-linecap')).toBe('butt')
-
   fireEvent.click(themeBtn('Nenhum'))
-  expect(document.querySelector('.route-box path')!.getAttribute('stroke-linecap')).toBe('round')
+  expect(document.querySelector('.route-box path')!.getAttribute('mask')).toBeNull()
 })
 
 it('o texto recebe contorno e sombra do tema', () => {

@@ -5,7 +5,7 @@ import {
 } from '../state'
 import { useDrag, clamp } from './useDrag'
 import { snapTo, CANVAS_TARGETS } from '../lib/guides'
-import { Theme, themeById, paintOf, themedTrace } from '../lib/themes'
+import { Theme, themeById, paintOf } from '../lib/themes'
 import { IconResize, IconX, IconMove } from './icons'
 
 /** Controles do canvas: mesmo tamanho nos três, e a espessura padrão do Feather. */
@@ -106,8 +106,8 @@ function RouteBoxEl({ containerRef }: { containerRef: React.RefObject<HTMLDivEle
   const toBox = 100 / box.size
 
   // Um subcaminho por parte solta da forma: a cabeça do corredor não pode ficar
-  // ligada ao tronco por um risco. A moldura do tema entra como subcaminho também.
-  const d = themedTrace(route, theme)
+  // ligada ao tronco por um risco.
+  const d = route
     .map(sub => sub.map((p, i) => `${i === 0 ? 'M' : 'L'}${(p.x * 100).toFixed(2)} ${(p.y * 100).toFixed(2)}`).join(' '))
     .join(' ')
 
@@ -133,33 +133,34 @@ function RouteBoxEl({ containerRef }: { containerRef: React.RefObject<HTMLDivEle
               </filter>
             ) : null,
           )}
+          {/* Máscara vaza o miolo: branco mostra, preto esconde. */}
+          {theme.route.map((l, i) =>
+            l.hollow ? (
+              <mask key={`m${i}`} id={`hollow-${i}`}>
+                <path d={d} fill="none" stroke="#fff" strokeWidth={style.strokeWidth * toBox * l.width} strokeLinejoin="round" strokeLinecap="round" />
+                <path d={d} fill="none" stroke="#000" strokeWidth={style.strokeWidth * toBox * l.width * l.hollow} strokeLinejoin="round" strokeLinecap="round" />
+              </mask>
+            ) : null,
+          )}
         </defs>
         <g transform={theme.rotate ? `rotate(${theme.rotate} 50 50)` : undefined}>
           {theme.route.map((l, i) => (
             <path
               key={i}
-              // A animação de desenhar usa o dasharray, então ela sai de cena
-              // quando o tema tem tinta corroída — que também é dasharray.
-              className={l.dash ? undefined : 'route-path'}
+              className="route-path"
               d={d}
               fill="none"
               stroke={paintOf(l.paint, style.routeColor, style.textColor)}
               strokeWidth={style.strokeWidth * toBox * l.width}
               strokeLinejoin="round"
-              // Ponta reta quando há corrosão: a arredondada avança meia espessura
-              // além de cada traço e fecharia as lacunas num traço grosso.
-              strokeLinecap={l.dash ? 'butt' : 'round'}
+              strokeLinecap="round"
               opacity={l.opacity}
               filter={l.glow ? `url(#glow-${i})` : undefined}
+              mask={l.hollow ? `url(#hollow-${i})` : undefined}
               transform={l.dx || l.dy ? `translate(${(l.dx ?? 0) * toBox} ${(l.dy ?? 0) * toBox})` : undefined}
-              {...(l.dash
-                ? {
-                    // dash é múltiplo da espessura da camada, então acompanha o
-                    // controle de traço em vez de virar conta de colar.
-                    strokeDasharray: l.dash.map(v => v * style.strokeWidth * l.width * toBox).join(' '),
-                    strokeDashoffset: (l.dashOffset ?? 0) * style.strokeWidth * l.width * toBox,
-                  }
-                : { pathLength: 100, strokeDasharray: 100, strokeDashoffset: 100 })}
+              pathLength={100}
+              strokeDasharray={100}
+              strokeDashoffset={100}
             />
           ))}
         </g>

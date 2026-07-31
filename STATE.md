@@ -132,6 +132,15 @@
 - O rótulo do botão passa a dizer JPG quando é JPG que vai sair.
 - 99 testes, bundle 78,2 → 78,3 kB gzip.
 
+## Sessão 12 (2026-07-30) — Carimbo no desenho da própria fonte
+
+- O traço do Carimbo passa a imitar a **Rubik Doodle Shadow**: silhueta **vazada** com cópia deslocada atrás fazendo a sombra. Anéis de moldura removidos — competiam com o desenho em vez de emoldurar.
+- **Capacidade nova `hollow`**: fração do miolo removida da linha, deixando as duas bordas. O miolo é vazado **de verdade**, não pintado por cima — pintar exigiria cor de fundo, e aqui o fundo é transparente ou a foto do usuário.
+  - Editor: `<mask>` (branco mostra, preto esconde), que vale só pro path dela.
+  - Export: `destination-out` **em canvas próprio por camada**. Direto no canvas final ele furaria a foto e as camadas de baixo — e no editor a máscara não faz isso. Verificado com foto: a foto aparece pelo miolo, intacta.
+- **Limpeza junto:** `dash`/`dashOffset` e `frame`/`contentScale`/`themedTrace` saíram. Eram usados só pelo Carimbo antigo; sem tema nenhum usando, viravam caminho de renderização morto nos dois renderizadores, sem como exercitar pela interface.
+- 97 testes, bundle 78,3 → 78,2 kB gzip.
+
 ## Pendências
 
 - [x] Revisar spec de design — resolvido 2026-07-23 (aprovação delegada, session 2)
