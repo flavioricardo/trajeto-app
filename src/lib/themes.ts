@@ -1,5 +1,4 @@
 import { OverlayFont } from '../fonts'
-import { Pt, Trace } from './geo'
 
 /**
  * Um tema pinta o conteúdo do quadro: o traço e os dados.
@@ -26,14 +25,13 @@ export type RouteLayer = {
   /** brilho ao redor, em % da largura do quadro */
   glow?: { paint: Paint; blur: number }
   /**
-   * Traço/lacuna alternados que corroem a tinta, em **múltiplos da espessura
-   * da própria camada** — não em % do quadro. Precisa ser relativo: o usuário
-   * mexe na espessura, e um padrão fixo vira contas de colar quando a linha
-   * engrossa e some quando ela afina.
+   * Fração do miolo que é vazada, deixando só as duas bordas da linha — é o que
+   * transforma o traço numa silhueta contornada em vez de uma linha cheia.
+   *
+   * O miolo é removido de verdade, não pintado por cima: pintar exigiria uma cor
+   * de fundo, e aqui o fundo é transparente (ou a foto do usuário).
    */
-  dash?: number[]
-  /** desloca o início do padrão, pra que as falhas de duas camadas não coincidam */
-  dashOffset?: number
+  hollow?: number
   opacity?: number
 }
 
@@ -51,32 +49,8 @@ export type Theme = {
   palette: { routeColor: string; textColor: string; font: OverlayFont; strokeWidth: number }
   route: RouteLayer[]
   text: TextTheme
-  /** Geometria própria do tema, em 0-1, desenhada junto do traço. Ex.: os anéis do carimbo. */
-  frame?: Trace
-  /** Encolhe o traço em torno do centro pra caber dentro da moldura. */
-  contentScale?: number
   /** Inclina o conteúdo do quadro, em graus. */
   rotate?: number
-}
-
-/** Círculo em 0-1 centrado no quadro, pros anéis da moldura. */
-const ring = (r: number, n = 120): Pt[] =>
-  Array.from({ length: n + 1 }, (_, i) => {
-    const t = (i / n) * 2 * Math.PI
-    return { x: 0.5 + r * Math.cos(t), y: 0.5 + r * Math.sin(t) }
-  })
-
-/**
- * Traçado final: o do usuário encolhido pela moldura, mais a geometria do tema.
- * Editor e export chamam a mesma função, então não há como divergirem.
- */
-export function themedTrace(route: Trace, theme: Theme): Trace {
-  const s = theme.contentScale ?? 1
-  const scaled =
-    s === 1
-      ? route
-      : route.map(sub => sub.map(p => ({ x: 0.5 + (p.x - 0.5) * s, y: 0.5 + (p.y - 0.5) * s })))
-  return theme.frame ? [...scaled, ...theme.frame] : scaled
 }
 
 const clampByte = (v: number) => Math.min(255, Math.max(0, Math.round(v)))
@@ -175,28 +149,21 @@ const FOFO: Theme = {
   },
 }
 
-// Carimbo de borracha: anéis em volta, tinta corroída e a impressão torta.
-// O padrão de traço é longo e irregular de propósito — um tracejado regular
-// leria como intenção, não como desgaste.
-// Múltiplos da espessura: trechos longos de tinta cortados por fendas curtas.
-// Trecho na ordem da própria espessura vira conta de colar, não rachadura.
-const INK_BREAKS = [3.5, 0.2, 2.2, 0.16, 6, 0.26, 1.5, 0.17, 4.4, 0.22]
-
+// Carimbo: o traço imita a Rubik Doodle Shadow do próprio tema — silhueta
+// vazada, com uma cópia deslocada atrás fazendo a sombra. Sem moldura: os
+// anéis competiam com o desenho em vez de emoldurar.
 const CARIMBO: Theme = {
   id: 'carimbo',
   label: 'Carimbo',
-  hint: 'Anéis, tinta corroída e a impressão batida torta.',
-  palette: { routeColor: '#8E241D', textColor: '#8E241D', font: 'Rubik Doodle Shadow', strokeWidth: 2.4 },
+  hint: 'Traço vazado com sombra deslocada, no desenho da própria fonte.',
+  palette: { routeColor: '#8E241D', textColor: '#8E241D', font: 'Rubik Doodle Shadow', strokeWidth: 2.6 },
   route: [
-    { paint: 'route', width: 1.15, opacity: 0.5, dx: 0.5, dy: 0.55, dash: INK_BREAKS, dashOffset: 0.9 },
-    { paint: 'route', width: 1, dash: INK_BREAKS },
-    { paint: 'routeDark', width: 0.38, opacity: 0.55, dx: -0.15, dy: -0.15, dash: INK_BREAKS, dashOffset: 2.1 },
+    { paint: 'route', width: 1, hollow: 0.52, dx: 0.75, dy: 0.8 },
+    { paint: 'route', width: 1, hollow: 0.52 },
   ],
   // Sem sombra própria: a Rubik Doodle Shadow já traz a sombra no desenho da
   // letra, e somar outra deixaria o texto sujo.
   text: {},
-  frame: [ring(0.49), ring(0.44)],
-  contentScale: 0.62,
   rotate: -8,
 }
 

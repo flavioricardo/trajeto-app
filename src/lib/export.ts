@@ -1,6 +1,6 @@
 import { Trace } from './geo'
 import { RouteBox, StatElement, Style } from '../state'
-import { Theme, Paint, paintOf, themedTrace } from './themes'
+import { Theme, Paint, paintOf } from './themes'
 import { coverRect } from './photo'
 
 type RenderState = {
@@ -45,54 +45,66 @@ export async function renderOverlay(state: RenderState, size: { w: number; h: nu
     const bx = (routeBox.x / 100) * size.w
     const by = (routeBox.y / 100) * size.h
     const bs = (routeBox.size / 100) * size.w
-    ctx.lineJoin = 'round'
-    ctx.lineCap = 'round'
-
-    // Mesma função do editor: moldura e encolhimento não têm como divergir.
-    const drawn = themedTrace(route, theme)
-    const trace = () => {
-      ctx.beginPath()
+    const drawn = route
+    const trace = (g: CanvasRenderingContext2D) => {
+      g.beginPath()
       // moveTo por subcaminho mantém as partes soltas da forma separadas no PNG,
       // do mesmo jeito que no editor.
       for (const sub of drawn) {
         sub.forEach((p, i) => {
           const x = bx + p.x * bs
           const y = by + p.y * bs
-          i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+          i === 0 ? g.moveTo(x, y) : g.lineTo(x, y)
         })
       }
-      ctx.stroke()
+      g.stroke()
     }
 
     // Camadas de baixo pra cima: é o que dá extrusão, contorno e néon.
     for (const layer of theme.route) {
-      ctx.save()
-      ctx.strokeStyle = ink(layer.paint)
-      ctx.lineWidth = pct(style.strokeWidth * layer.width)
-      ctx.globalAlpha = layer.opacity ?? 1
-      if (layer.glow) {
-        ctx.shadowColor = ink(layer.glow.paint)
-        ctx.shadowBlur = pct(layer.glow.blur)
+      // Camada vazada vai num canvas próprio: `destination-out` apagaria a foto
+      // e as camadas de baixo, enquanto no editor a máscara vale só pro path dela.
+      const off = layer.hollow ? document.createElement('canvas') : null
+      if (off) {
+        off.width = size.w
+        off.height = size.h
       }
-      if (layer.dash) {
-        // Múltiplo da espessura da camada, igual ao editor.
-        const unit = style.strokeWidth * layer.width
-        ctx.setLineDash(layer.dash.map(v => pct(v * unit)))
-        ctx.lineDashOffset = pct((layer.dashOffset ?? 0) * unit)
-        // Ponta reta, como no editor: a arredondada fecharia as lacunas.
-        ctx.lineCap = 'butt'
+      const g = off ? off.getContext('2d')! : ctx
+
+      g.save()
+      g.lineJoin = 'round'
+      g.lineCap = 'round'
+      g.strokeStyle = ink(layer.paint)
+      const largura = pct(style.strokeWidth * layer.width)
+      g.lineWidth = largura
+      g.globalAlpha = layer.opacity ?? 1
+      if (layer.glow) {
+        g.shadowColor = ink(layer.glow.paint)
+        g.shadowBlur = pct(layer.glow.blur)
       }
       // Rotação antes do deslocamento da camada, na mesma ordem do <g> do editor.
       if (theme.rotate) {
         const cx = bx + bs / 2
         const cy = by + bs / 2
-        ctx.translate(cx, cy)
-        ctx.rotate((theme.rotate * Math.PI) / 180)
-        ctx.translate(-cx, -cy)
+        g.translate(cx, cy)
+        g.rotate((theme.rotate * Math.PI) / 180)
+        g.translate(-cx, -cy)
       }
-      ctx.translate(pct(layer.dx ?? 0), pct(layer.dy ?? 0))
-      trace()
-      ctx.restore()
+      g.translate(pct(layer.dx ?? 0), pct(layer.dy ?? 0))
+      trace(g)
+
+      // Vaza o miolo com o mesmo caminho e a mesma transformação.
+      if (layer.hollow) {
+        g.globalCompositeOperation = 'destination-out'
+        g.globalAlpha = 1
+        g.shadowColor = 'transparent'
+        g.shadowBlur = 0
+        g.lineWidth = largura * layer.hollow
+        trace(g)
+      }
+      g.restore()
+
+      if (off) ctx.drawImage(off, 0, 0)
     }
   }
 
