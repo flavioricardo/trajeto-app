@@ -146,6 +146,12 @@
   - O dasharray já era usado pela animação de desenho. Pra não escolher entre as duas coisas, a animação da camada riscada saiu pra uma `<mask id="reveal">` — um traço largo que se revela ao longo da rota.
 - **Limpeza junto:** `dash`/`dashOffset`, `frame`/`contentScale`/`themedTrace` e o `hollow` por camada saíram. Sem tema usando, viravam caminho de renderização morto nos dois renderizadores.
 - 101 testes, bundle 78,3 → 78,4 kB gzip.
+- **Produção verificada:** `https://trajeto-app-fmeira.vercel.app/` responde 200 e o CSS servido traz `.route-path,.route-reveal{animation:draw…}`, que só existe depois desta mudança. Deploy `dpl_As6veshWQz9MLv5kRmgNzL3CpN1z` (sha `12ebc40`), READY.
+
+### Duas armadilhas de processo desta sessão
+
+- **`curl` na produção falha com 403 no túnel** — é o proxy da sessão, não o app. Quem alcança o domínio é o MCP da Vercel (`web_fetch_vercel_url`). Não confundir com app fora do ar.
+- **PR mergeado por squash faz o branch conflitar com o main inteiro** na mudança seguinte: o main tem um commit espremido e o branch ainda tem os originais, então os mesmos arquivos conflitam em bloco. Depois de cada merge, `git checkout -B <branch> origin/main`. Se acontecer, o lado do branch é o certo — mas confira com `git diff <branch> origin/main` que o main não trazia nada além disso antes de resolver em massa.
 
 ## Pendências
 
