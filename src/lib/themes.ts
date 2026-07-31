@@ -166,7 +166,7 @@ const CARIMBO: Theme = {
   palette: { routeColor: '#8E241D', textColor: '#8E241D', font: 'Rubik Doodle Shadow', strokeWidth: 2.6 },
   route: [
     // Sombra riscada, deslocada pra baixo e pra esquerda como a da fonte.
-    { paint: 'route', width: 1, dx: -0.6, dy: 0.65, ticks: { length: 0.26, gap: 0.34 } },
+    { paint: 'route', width: 1, dx: -0.6, dy: 0.65, ticks: { length: 0.17, gap: 0.19 } },
     // Corpo cheio: vira contorno quando o carve abre o miolo, e cobre o meio
     // dos riscos — sobra só a ponta que passa da borda, que é a sombra.
     { paint: 'route', width: 1 },

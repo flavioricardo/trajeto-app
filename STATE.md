@@ -143,6 +143,7 @@
   - Export: a pilha vai num canvas próprio e leva um `destination-out` só no fim, e aí é composta no canvas final. Direto no canvas final o vazio furaria a foto. Verificado com foto: a foto aparece pelo miolo, intacta.
 - **Capacidade `ticks` (da camada):** o `strokeDasharray` corta o traço em tracinhos, e como o traço é grosso cada tracinho sai **atravessado** nele — perpendicular à rota, de graça, sem calcular normal nenhuma. A camada de cima cobre o meio dos riscos; sobra só a ponta que passa da borda, que é a sombra.
   - Ponta reta obrigatória: a redonda estica cada tracinho por meia espessura e fecha os vãos.
+  - Densidade ajustada depois: risco 0,26/vão 0,34 lia como pente. Passou pra 0,17/0,19 — vão quase igual ao risco, que é a densidade da própria fonte e o que dá o aspecto de lápis.
   - O dasharray já era usado pela animação de desenho. Pra não escolher entre as duas coisas, a animação da camada riscada saiu pra uma `<mask id="reveal">` — um traço largo que se revela ao longo da rota.
 - **Limpeza junto:** `dash`/`dashOffset`, `frame`/`contentScale`/`themedTrace` e o `hollow` por camada saíram. Sem tema usando, viravam caminho de renderização morto nos dois renderizadores.
 - 101 testes, bundle 78,3 → 78,4 kB gzip.
