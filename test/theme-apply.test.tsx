@@ -51,24 +51,50 @@ it('as camadas seguem a cor que o usuário escolher, não uma cor fixa', () => {
   expect(strokes.some(s => s?.toLowerCase().startsWith('#ff4d12'))).toBe(false)
 })
 
-it('camada vazada ganha máscara que abre o miolo do traço', () => {
+it('o vazado é máscara do grupo: limpa a hachura de trás também', () => {
   open()
   fireEvent.click(themeBtn('Carimbo'))
 
-  const paths = [...document.querySelectorAll('.route-box > svg > g path')]
-  expect(paths.length).toBeGreaterThan(0)
-  expect(paths.every(p => p.getAttribute('mask')?.startsWith('url(#hollow-'))).toBe(true)
+  const g = document.querySelector('.route-box > svg > g')!
+  expect(g.getAttribute('mask')).toBe('url(#carve)')
 
-  // a máscara é branca por fora e preta no miolo, e o miolo é mais fino
-  const mask = document.querySelector('.route-box mask')!
-  const [fora, miolo] = [...mask.querySelectorAll('path')].map(p => Number(p.getAttribute('stroke-width')))
-  expect(miolo).toBeLessThan(fora)
+  // branco por fora, preto no miolo — e o miolo é mais fino que o traço
+  const mask = document.querySelector('#carve')!
+  expect(mask.querySelector('rect')?.getAttribute('fill')).toBe('#fff')
+  const miolo = Number(mask.querySelector('path')!.getAttribute('stroke-width'))
+  const traco = Number(document.querySelector('.route-box > svg > g path')!.getAttribute('stroke-width'))
+  expect(miolo).toBeLessThan(traco)
+})
+
+it('a sombra é cortada em tracinhos de ponta reta', () => {
+  open()
+  fireEvent.click(themeBtn('Carimbo'))
+  const sombra = [...document.querySelectorAll('.route-box > svg > g path')]
+    .find(p => p.getAttribute('stroke-linecap') === 'butt')!
+  expect(sombra).toBeTruthy()
+  // dois valores: risco e vão — e o risco é bem menor que a espessura do traço
+  const [risco, vao] = sombra.getAttribute('stroke-dasharray')!.split(' ').map(Number)
+  expect(vao).toBeGreaterThanOrEqual(risco)
+  expect(risco).toBeLessThan(Number(sombra.getAttribute('stroke-width')))
+})
+
+it('a camada riscada não perde a animação: ela vem de uma máscara à parte', () => {
+  open()
+  fireEvent.click(themeBtn('Carimbo'))
+  const sombra = document.querySelector('.route-box path[stroke-linecap="butt"]')!
+  expect(sombra.getAttribute('mask')).toBe('url(#reveal)')
+  // a máscara é que carrega o dasharray da animação, e é larga o bastante
+  // pra não recortar o traço que ela revela
+  const rev = document.querySelector('.route-reveal')!
+  expect(rev.getAttribute('stroke-dasharray')).toBe('100')
+  expect(Number(rev.getAttribute('stroke-width')))
+    .toBeGreaterThan(Number(sombra.getAttribute('stroke-width')))
 })
 
 it('tema sem vazado não ganha máscara', () => {
   open()
   fireEvent.click(themeBtn('Nenhum'))
-  expect(document.querySelector('.route-box path')!.getAttribute('mask')).toBeNull()
+  expect(document.querySelector('.route-box > svg > g')!.getAttribute('mask')).toBeNull()
 })
 
 it('o texto recebe contorno e sombra do tema', () => {

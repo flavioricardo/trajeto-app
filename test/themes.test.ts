@@ -54,23 +54,42 @@ it('o Fofo tem brilho no traço e no texto', () => {
   expect(fofo.text.shadow?.blur).toBeGreaterThan(0)
 })
 
-it('o Carimbo imita a própria fonte: traço vazado com sombra deslocada', () => {
+it('o Carimbo imita a fonte: contorno vazado e sombra riscada', () => {
   const c = themeById('carimbo')
   // tinta única: texto e traço na mesma cor
   expect(c.palette.textColor).toBe(c.palette.routeColor)
-  // toda camada é vazada, que é o desenho da Rubik Doodle Shadow
-  expect(c.route.every(l => (l.hollow ?? 0) > 0)).toBe(true)
-  // e uma delas é a cópia deslocada que faz a sombra
-  expect(c.route.some(l => l.dx || l.dy)).toBe(true)
+  // o miolo é aberto, que é o vazado da letra
+  expect(c.carve).toBeGreaterThan(0)
+  // e a sombra é riscada e deslocada, não cópia chapada do contorno
+  const sombra = c.route.find(l => l.ticks)!
+  expect(sombra).toBeTruthy()
+  expect(sombra.dx || sombra.dy).toBeTruthy()
   expect(c.rotate).toBeTruthy()
 })
 
 it('o vazado deixa borda de sobra: miolo não pode engolir a linha', () => {
   for (const t of THEMES) {
+    if (t.carve == null) continue
+    expect(t.carve, t.id).toBeGreaterThan(0)
+    expect(t.carve, t.id).toBeLessThan(1)
+  }
+})
+
+it('o risco deixa vão de sobra, senão a sombra vira cor chapada', () => {
+  for (const t of THEMES) {
     for (const l of t.route) {
-      if (l.hollow == null) continue
-      expect(l.hollow, t.id).toBeGreaterThan(0)
-      expect(l.hollow, t.id).toBeLessThan(1)
+      if (!l.ticks) continue
+      expect(l.ticks.gap, t.id).toBeGreaterThanOrEqual(l.ticks.length)
+      expect(l.ticks.length, t.id).toBeGreaterThan(0)
+    }
+  }
+})
+
+it('a camada riscada é deslocada, senão o corpo cobre os riscos inteiros', () => {
+  for (const t of THEMES) {
+    for (const l of t.route) {
+      if (!l.ticks) continue
+      expect(Math.abs(l.dx ?? 0) + Math.abs(l.dy ?? 0), t.id).toBeGreaterThan(0)
     }
   }
 })

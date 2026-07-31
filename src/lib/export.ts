@@ -60,23 +60,25 @@ export async function renderOverlay(state: RenderState, size: { w: number; h: nu
       g.stroke()
     }
 
-    // Camadas de baixo pra cima: é o que dá extrusão, contorno e néon.
-    for (const layer of theme.route) {
-      // Camada vazada vai num canvas próprio: `destination-out` apagaria a foto
-      // e as camadas de baixo, enquanto no editor a máscara vale só pro path dela.
-      const off = layer.hollow ? document.createElement('canvas') : null
-      if (off) {
-        off.width = size.w
-        off.height = size.h
-      }
-      const g = off ? off.getContext('2d')! : ctx
+    // A pilha inteira vai num canvas próprio: o vazado precisa limpar todas as
+    // camadas dentro dele (o miolo da letra não mostra a sombra de trás), e
+    // fazer isso direto no canvas final furaria a foto.
+    const off = document.createElement('canvas')
+    off.width = size.w
+    off.height = size.h
+    const g = off.getContext('2d')!
+    g.lineJoin = 'round'
+    g.lineCap = 'round'
 
+    for (const layer of theme.route) {
       g.save()
-      g.lineJoin = 'round'
-      g.lineCap = 'round'
       g.strokeStyle = ink(layer.paint)
-      const largura = pct(style.strokeWidth * layer.width)
-      g.lineWidth = largura
+      g.lineWidth = pct(style.strokeWidth * layer.width)
+      if (layer.ticks) {
+        // Ponta reta, senão a redonda estica cada tracinho e fecha os vãos.
+        g.lineCap = 'butt'
+        g.setLineDash([pct(layer.ticks.length), pct(layer.ticks.gap)])
+      }
       g.globalAlpha = layer.opacity ?? 1
       if (layer.glow) {
         g.shadowColor = ink(layer.glow.paint)
@@ -92,20 +94,26 @@ export async function renderOverlay(state: RenderState, size: { w: number; h: nu
       }
       g.translate(pct(layer.dx ?? 0), pct(layer.dy ?? 0))
       trace(g)
-
-      // Vaza o miolo com o mesmo caminho e a mesma transformação.
-      if (layer.hollow) {
-        g.globalCompositeOperation = 'destination-out'
-        g.globalAlpha = 1
-        g.shadowColor = 'transparent'
-        g.shadowBlur = 0
-        g.lineWidth = largura * layer.hollow
-        trace(g)
-      }
       g.restore()
-
-      if (off) ctx.drawImage(off, 0, 0)
     }
+
+    // Abre o miolo depois de tudo desenhado, igual à máscara do grupo no editor.
+    if (theme.carve) {
+      g.save()
+      g.globalCompositeOperation = 'destination-out'
+      g.lineWidth = pct(style.strokeWidth * theme.carve)
+      if (theme.rotate) {
+        const cx = bx + bs / 2
+        const cy = by + bs / 2
+        g.translate(cx, cy)
+        g.rotate((theme.rotate * Math.PI) / 180)
+        g.translate(-cx, -cy)
+      }
+      trace(g)
+      g.restore()
+    }
+
+    ctx.drawImage(off, 0, 0)
   }
 
   ctx.textBaseline = 'top'
