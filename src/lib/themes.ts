@@ -25,13 +25,12 @@ export type RouteLayer = {
   /** brilho ao redor, em % da largura do quadro */
   glow?: { paint: Paint; blur: number }
   /**
-   * Fração do miolo que é vazada, deixando só as duas bordas da linha — é o que
-   * transforma o traço numa silhueta contornada em vez de uma linha cheia.
-   *
-   * O miolo é removido de verdade, não pintado por cima: pintar exigiria uma cor
-   * de fundo, e aqui o fundo é transparente (ou a foto do usuário).
+   * Corta o traço em tracinhos. Como o traço é grosso, cada tracinho sai
+   * atravessado nele, virando um risco perpendicular à rota — é assim que a
+   * Rubik Doodle Shadow sombreia a letra: riscos de caneta pendurados no
+   * contorno, sempre perpendiculares à borda. Medidas em % da largura do quadro.
    */
-  hollow?: number
+  ticks?: { length: number; gap: number }
   opacity?: number
 }
 
@@ -51,6 +50,14 @@ export type Theme = {
   text: TextTheme
   /** Inclina o conteúdo do quadro, em graus. */
   rotate?: number
+  /**
+   * Vaza o miolo do traço, em fração da espessura, deixando só o contorno.
+   *
+   * O vazio limpa **todas** as camadas dentro dele, não só a de cima: é o
+   * interior da letra, que na fonte fica com o fundo à mostra e sem a hachura
+   * da sombra por baixo. Por isso é do tema e não da camada.
+   */
+  carve?: number
 }
 
 const clampByte = (v: number) => Math.min(255, Math.max(0, Math.round(v)))
@@ -149,22 +156,26 @@ const FOFO: Theme = {
   },
 }
 
-// Carimbo: o traço imita a Rubik Doodle Shadow do próprio tema — silhueta
-// vazada, com uma cópia deslocada atrás fazendo a sombra. Sem moldura: os
-// anéis competiam com o desenho em vez de emoldurar.
+// Carimbo: o traço imita a Rubik Doodle Shadow do próprio tema — contorno fino
+// e vazado, com a sombra riscada a caneta pendurada embaixo e à esquerda. Sem
+// moldura: os anéis competiam com o desenho em vez de emoldurar.
 const CARIMBO: Theme = {
   id: 'carimbo',
   label: 'Carimbo',
-  hint: 'Traço vazado com sombra deslocada, no desenho da própria fonte.',
+  hint: 'Contorno vazado com sombra riscada a caneta, no desenho da própria fonte.',
   palette: { routeColor: '#8E241D', textColor: '#8E241D', font: 'Rubik Doodle Shadow', strokeWidth: 2.6 },
   route: [
-    { paint: 'route', width: 1, hollow: 0.52, dx: 0.75, dy: 0.8 },
-    { paint: 'route', width: 1, hollow: 0.52 },
+    // Sombra riscada, deslocada pra baixo e pra esquerda como a da fonte.
+    { paint: 'route', width: 1, dx: -0.6, dy: 0.65, ticks: { length: 0.26, gap: 0.34 } },
+    // Corpo cheio: vira contorno quando o carve abre o miolo, e cobre o meio
+    // dos riscos — sobra só a ponta que passa da borda, que é a sombra.
+    { paint: 'route', width: 1 },
   ],
   // Sem sombra própria: a Rubik Doodle Shadow já traz a sombra no desenho da
   // letra, e somar outra deixaria o texto sujo.
   text: {},
   rotate: -8,
+  carve: 0.66,
 }
 
 export const THEMES: Theme[] = [PLAIN, TRIDI, MEDIEVAL, TECH, FOFO, CARIMBO]

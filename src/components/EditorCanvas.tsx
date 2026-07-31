@@ -133,17 +133,35 @@ function RouteBoxEl({ containerRef }: { containerRef: React.RefObject<HTMLDivEle
               </filter>
             ) : null,
           )}
-          {/* Máscara vaza o miolo: branco mostra, preto esconde. */}
-          {theme.route.map((l, i) =>
-            l.hollow ? (
-              <mask key={`m${i}`} id={`hollow-${i}`}>
-                <path d={d} fill="none" stroke="#fff" strokeWidth={style.strokeWidth * toBox * l.width} strokeLinejoin="round" strokeLinecap="round" />
-                <path d={d} fill="none" stroke="#000" strokeWidth={style.strokeWidth * toBox * l.width * l.hollow} strokeLinejoin="round" strokeLinecap="round" />
-              </mask>
-            ) : null,
-          )}
+          {/* A camada riscada usa o strokeDasharray pros tracinhos, então não sobra
+              dasharray pra animação de desenho: ela vem desta máscara, um traço
+              largo que se revela ao longo da rota. */}
+          {theme.route.some(l => l.ticks) ? (
+            <mask id="reveal">
+              <path
+                className="route-reveal"
+                d={d}
+                fill="none"
+                stroke="#fff"
+                strokeWidth={style.strokeWidth * toBox * 3}
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                pathLength={100}
+                strokeDasharray={100}
+                strokeDashoffset={100}
+              />
+            </mask>
+          ) : null}
+          {/* Vazado: branco mostra, preto esconde. Vale pro grupo todo, porque o
+              miolo da letra fica limpo também da hachura que está por baixo. */}
+          {theme.carve ? (
+            <mask id="carve">
+              <rect x="-100" y="-100" width="300" height="300" fill="#fff" />
+              <path d={d} fill="none" stroke="#000" strokeWidth={style.strokeWidth * toBox * theme.carve} strokeLinejoin="round" strokeLinecap="round" />
+            </mask>
+          ) : null}
         </defs>
-        <g transform={theme.rotate ? `rotate(${theme.rotate} 50 50)` : undefined}>
+        <g transform={theme.rotate ? `rotate(${theme.rotate} 50 50)` : undefined} mask={theme.carve ? 'url(#carve)' : undefined}>
           {theme.route.map((l, i) => (
             <path
               key={i}
@@ -153,14 +171,16 @@ function RouteBoxEl({ containerRef }: { containerRef: React.RefObject<HTMLDivEle
               stroke={paintOf(l.paint, style.routeColor, style.textColor)}
               strokeWidth={style.strokeWidth * toBox * l.width}
               strokeLinejoin="round"
-              strokeLinecap="round"
+              // Ponta reta no risco: a redonda esticaria cada tracinho até fechar
+              // os vãos, num traço grosso desses.
+              strokeLinecap={l.ticks ? 'butt' : 'round'}
               opacity={l.opacity}
               filter={l.glow ? `url(#glow-${i})` : undefined}
-              mask={l.hollow ? `url(#hollow-${i})` : undefined}
+              mask={l.ticks ? 'url(#reveal)' : undefined}
               transform={l.dx || l.dy ? `translate(${(l.dx ?? 0) * toBox} ${(l.dy ?? 0) * toBox})` : undefined}
-              pathLength={100}
-              strokeDasharray={100}
-              strokeDashoffset={100}
+              pathLength={l.ticks ? undefined : 100}
+              strokeDasharray={l.ticks ? `${l.ticks.length * toBox} ${l.ticks.gap * toBox}` : 100}
+              strokeDashoffset={l.ticks ? undefined : 100}
             />
           ))}
         </g>

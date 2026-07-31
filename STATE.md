@@ -132,14 +132,20 @@
 - O rótulo do botão passa a dizer JPG quando é JPG que vai sair.
 - 99 testes, bundle 78,2 → 78,3 kB gzip.
 
-## Sessão 12 (2026-07-30) — Carimbo no desenho da própria fonte
+## Sessão 12 (2026-07-30/31) — Carimbo no desenho da própria fonte
 
-- O traço do Carimbo passa a imitar a **Rubik Doodle Shadow**: silhueta **vazada** com cópia deslocada atrás fazendo a sombra. Anéis de moldura removidos — competiam com o desenho em vez de emoldurar.
-- **Capacidade nova `hollow`**: fração do miolo removida da linha, deixando as duas bordas. O miolo é vazado **de verdade**, não pintado por cima — pintar exigiria cor de fundo, e aqui o fundo é transparente ou a foto do usuário.
-  - Editor: `<mask>` (branco mostra, preto esconde), que vale só pro path dela.
-  - Export: `destination-out` **em canvas próprio por camada**. Direto no canvas final ele furaria a foto e as camadas de baixo — e no editor a máscara não faz isso. Verificado com foto: a foto aparece pelo miolo, intacta.
-- **Limpeza junto:** `dash`/`dashOffset` e `frame`/`contentScale`/`themedTrace` saíram. Eram usados só pelo Carimbo antigo; sem tema nenhum usando, viravam caminho de renderização morto nos dois renderizadores, sem como exercitar pela interface.
-- 97 testes, bundle 78,3 → 78,2 kB gzip.
+- O traço do Carimbo passa a imitar a **Rubik Doodle Shadow**. Anéis de moldura removidos — competiam com o desenho em vez de emoldurar.
+- **Parei de adivinhar a fonte.** O navegador não alcança o Google Fonts pelo proxy, mas o `curl` sim: baixei o TTF, rendi um espécime ampliado e só então vi como a letra é feita. Duas tentativas antes disso (cópia deslocada; hachura diagonal) erraram por chute.
+  - A letra é **contorno fino e vazado**, com o fundo à mostra no miolo.
+  - A sombra é **risco de caneta perpendicular à borda**, pendurado embaixo e à esquerda. Não é cópia deslocada nem hachura em diagonal fixa: em borda vertical o risco sai horizontal, em borda horizontal sai vertical.
+- **Capacidade `carve` (do tema, não da camada):** fração do miolo removida da linha, deixando as duas bordas. O vazio limpa **todas** as camadas de dentro — é o interior da letra, que não mostra nem a sombra de trás.
+  - Editor: `<mask>` no `<g>` inteiro.
+  - Export: a pilha vai num canvas próprio e leva um `destination-out` só no fim, e aí é composta no canvas final. Direto no canvas final o vazio furaria a foto. Verificado com foto: a foto aparece pelo miolo, intacta.
+- **Capacidade `ticks` (da camada):** o `strokeDasharray` corta o traço em tracinhos, e como o traço é grosso cada tracinho sai **atravessado** nele — perpendicular à rota, de graça, sem calcular normal nenhuma. A camada de cima cobre o meio dos riscos; sobra só a ponta que passa da borda, que é a sombra.
+  - Ponta reta obrigatória: a redonda estica cada tracinho por meia espessura e fecha os vãos.
+  - O dasharray já era usado pela animação de desenho. Pra não escolher entre as duas coisas, a animação da camada riscada saiu pra uma `<mask id="reveal">` — um traço largo que se revela ao longo da rota.
+- **Limpeza junto:** `dash`/`dashOffset`, `frame`/`contentScale`/`themedTrace` e o `hollow` por camada saíram. Sem tema usando, viravam caminho de renderização morto nos dois renderizadores.
+- 101 testes, bundle 78,3 → 78,4 kB gzip.
 
 ## Pendências
 
@@ -151,9 +157,9 @@
 - [x] Rotacionar client secret do Strava — resolvido 2026-07-30 (session 7), secret novo gerado. Invalida o vazamento da session 5.
 - [x] Conectar o repo GitHub na Vercel — resolvido 2026-07-30 (session 7). Deploy por push, sem mais MCP manual.
 - [x] Desligar a Deployment Protection — resolvido 2026-07-30 (session 7), `ssoProtection.enabled = false`. App público em https://trajeto-app-fmeira.vercel.app/ (200 verificado). Aberta desde 2026-07-23, 5 sessões.
-- [ ] Gravar STRAVA_CLIENT_ID (numérico) e STRAVA_CLIENT_SECRET (o novo) na Vercel — https://vercel.com/flavioricardo91/trajeto-app/settings/environment-variables — **e** apontar o Authorization Callback Domain para `trajeto-app-fmeira.vercel.app` — https://www.strava.com/settings/api
+- [x] Gravar STRAVA_CLIENT_ID (numérico) e STRAVA_CLIENT_SECRET (o novo) na Vercel — https://vercel.com/flavioricardo91/trajeto-app/settings/environment-variables — **e** apontar o Authorization Callback Domain para `trajeto-app-fmeira.vercel.app` — https://www.strava.com/settings/api
       | Blocks: botão Conectar com Strava. Confirmado em 2026-07-30 que `/api/strava-config` devolve `null` num deploy posterior à rotação, então não é defasagem de deploy: as duas variáveis não estão gravadas na Vercel.
       | Por que o callback mudou: o app passou a rodar em `trajeto-app-fmeira.vercel.app` e o `redirect_uri` é montado a partir do `location.origin`. Se o domínio do Strava não bater com aquele por onde o usuário entra, o OAuth é recusado.
       | Depois de gravar: as env vars só valem no deploy seguinte. Com o Git conectado, qualquer push em main já republica.
       | Como validar: abrir https://trajeto-app-fmeira.vercel.app/api/strava-config — tem que vir um número no `clientId`. `null` = ausente ou não numérico (o guard rejeita).
-      | Open since: 2026-07-24 (session 4)
+      | Encerrada 2026-07-30 (session 8) pelo Flávio: "está tudo certo, integração com o Strava funcionando". Fechada pela confirmação dele, não por verificação minha. Aberta desde 2026-07-24 (session 4), 4 sessões.
