@@ -76,9 +76,14 @@ body {
   overflow: hidden;
   touch-action: none;
   border: 1px solid var(--contour);
-  /* xadrez = transparência */
+  /*
+   * Xadrez = transparência. O tom médio é escuro de propósito, senão o texto
+   * branco do overlay some. Mas o contraste entre os dois quadros é baixo e a
+   * célula é pequena: assim ele lê como textura de fundo e não disputa atenção
+   * com o desenho, que é o que a pessoa veio ver.
+   */
   background:
-    repeating-conic-gradient(#a9afa9 0% 25%, #c3c8c2 0% 50%) 0 0 / 22px 22px;
+    repeating-conic-gradient(#adb2ad 0% 25%, #b7bcb6 0% 50%) 0 0 / 16px 16px;
   box-shadow: 0 6px 24px rgb(23 32 27 / 0.08);
   container-type: inline-size;
 }
@@ -226,7 +231,33 @@ input[type='text'], input[type='search'] {
   font: inherit;
   background: var(--paper);
 }
-input[type='file'] { font-size: 13px; }
+/*
+ * Arquivo: o controle nativo entrega um botão do navegador, que vem no idioma
+ * do sistema e destoa de tudo. O input fica fora de vista mas continua no fluxo
+ * de foco — recortar em vez de esconder é o que preserva teclado e leitor de tela.
+ */
+.file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.file .file-btn {
+  font: inherit;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 10px 16px;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+}
+.file .file-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.file .file-name { margin: 8px 0 0; font-size: 13px; color: var(--moss); overflow-wrap: anywhere; }
 .suggest { list-style: none; margin: 4px 0 0; padding: 0; border: 1px solid var(--contour); border-radius: 10px; overflow: hidden; }
 .suggest li button {
   display: block;
@@ -275,6 +306,23 @@ select { padding: 9px 10px; border-radius: 10px; border: 1px solid var(--contour
 .shape-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .shape-grid .btn { padding: 10px 6px; font-size: 13px; }
 .shape-grid .btn[aria-pressed='true'] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+/*
+ * Escolher forma é escolher desenho, então o botão mostra o desenho. O traço
+ * herda a cor do texto do botão, que é o que faz o selecionado inverter junto.
+ * A coluna se ajusta sozinha: três no celular, mais na tela larga.
+ */
+.shape-grid.previews { grid-template-columns: repeat(auto-fill, minmax(94px, 1fr)); gap: 8px; }
+.shape-grid.previews .btn {
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 6px 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.15;
+  border-radius: var(--radius);
+}
+.shape-grid.previews .btn svg { width: 34px; height: 34px; display: block; }
 
 .check { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--ink); }
 .check input { width: 17px; height: 17px; accent-color: var(--accent); }

@@ -12,6 +12,7 @@ import { renderOverlay } from '../lib/export'
 import { THEMES, Theme, themeById } from '../lib/themes'
 import { loadImage } from '../lib/photo'
 import { IconPlus, IconDownload } from './icons'
+import FileField from './FileField'
 import { langAtom, useT, useLang, errorText, localizeNumbers, Lang, dict, htmlLang } from '../i18n'
 
 export default function App() {
@@ -160,10 +161,7 @@ function PhotoPanel() {
         </>
       ) : (
         <>
-          <div className="field">
-            <label htmlFor="photo">{t('photo.choose')}</label>
-            <input id="photo" type="file" accept="image/*" onChange={e => onFile(e.target.files?.[0])} />
-          </div>
+          <FileField id="photo" accept="image/*" label={t('photo.choose')} onFile={onFile} />
           <p className="hint">{t('photo.privacy')}</p>
         </>
       )}

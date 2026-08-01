@@ -175,6 +175,16 @@
 - Unidade continua métrica nos dois idiomas. Milha é decisão de unidade, não de idioma (brasileiro não quer milha, inglês pode querer km), então seria um controle à parte.
 - 113 testes, bundle 78,4 → 82,1 kB gzip.
 
+## Sessão 12 (cont.) — três defeitos visuais
+
+Avaliação a pedido do Flávio. A direção topográfica (papel, tinta, laranja, curvas de nível) está boa e **não foi redesenhada** — o que estava errado eram três coisas que contradiziam ela.
+
+- **O xadrez de transparência era o herói da tela.** Ele ocupava a primeira dobra inteira com um padrão cinza barulhento, e o desenho, que é o produto, competia com ele. O tom médio continua escuro de propósito — foi assim que a session 3 resolveu texto branco ilegível — mas o contraste *entre os dois quadros* caiu e a célula foi de 22 pra 16 px. Mesma luminância, muito menos ruído.
+- **A escolha de forma eram 22 pílulas de texto idênticas.** Escolher forma é escolher desenho, e o desenho já estava no `Trace`. Agora cada botão mostra a própria forma, com o traço em `currentColor` — então o selecionado inverte junto, sem regra extra. A coluna é `auto-fill`: três no celular, mais na tela larga.
+- **O seletor de arquivo era o do navegador.** Além de destoar de tudo, ele vem no idioma do sistema operacional: em português aparecia "Choose File", contradizendo o idioma duplo recém-entregue. `FileField` esconde o input (recortado, não `display:none`, pra preservar foco) e põe um botão de verdade na frente.
+- **Copy junto:** o campo de arquivo dizia a mesma coisa três vezes (título, botão genérico, "nenhum arquivo escolhido"). Agora o botão é o rótulo e o nome do arquivo só aparece depois de escolhido, que é quando ele informa algo.
+- 113 testes, bundle 82,1 → 82,4 kB gzip.
+
 ## Pendências
 
 - [x] Revisar spec de design — resolvido 2026-07-23 (aprovação delegada, session 2)

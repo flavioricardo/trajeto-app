@@ -49,7 +49,7 @@ it('rota vinda de outra origem não marca forma nenhuma', async () => {
   </trkseg></trk></gpx>`
   const file = new File([gpx], 'rota.gpx', { type: 'application/gpx+xml' })
   Object.defineProperty(file, 'text', { value: async () => gpx })
-  fireEvent.change(screen.getByLabelText('Arquivo GPX da atividade'), { target: { files: [file] } })
+  fireEvent.change(screen.getByLabelText('Escolha o GPX da atividade'), { target: { files: [file] } })
 
   await waitFor(() => expect(document.querySelector('.route-box')).toBeTruthy())
   fireEvent.click(screen.getByRole('tab', { name: 'Formas' }))
