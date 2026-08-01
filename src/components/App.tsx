@@ -35,8 +35,9 @@ function Header() {
   return (
     <header className="header">
       <Contours />
-      <h1 className="brand">Traje<em>t</em>o</h1>
-      <p className="tagline">Sua rota vira overlay transparente pro story. Grátis e sem cadastro.</p>
+      {/* O destaque cai em "line", que é o traço que o app desenha. */}
+      <h1 className="brand">Story<em>line</em></h1>
+      <p className="tagline">Sua atividade vira imagem pro story. Grátis e sem cadastro.</p>
     </header>
   )
 }
@@ -219,7 +220,7 @@ function ExportBar() {
       const size = PRESETS[preset]
       const img = photo && comFoto ? await loadImage(photo.url) : null
       const blob = await renderOverlay({ elements, route, routeBox, style, theme, photo: img }, size)
-      const nome = `trajeto-${preset}.${img ? 'jpg' : 'png'}`
+      const nome = `storyline-${preset}.${img ? 'jpg' : 'png'}`
       const file = new File([blob], nome, { type: blob.type })
 
       if (navigator.canShare?.({ files: [file] })) {

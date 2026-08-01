@@ -12,6 +12,8 @@ import { SHAPES } from '../lib/shapes'
 import { Trace } from '../lib/geo'
 import { searchPlaces, Place } from '../lib/api'
 
+// Mantém o nome antigo do app de propósito: renomear a chave desconectaria
+// do Strava quem já autorizou, e ela não aparece pra ninguém.
 const STORAGE_KEY = 'trajeto_strava'
 
 function loadToken(): StravaToken | null {

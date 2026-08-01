@@ -1,11 +1,11 @@
-# STATE — Trajeto (trajeto-app)
+# STATE — Storyline (repo `trajeto-app`)
 
-**Última sessão:** 2026-07-30 (session 7)
+**Última sessão:** 2026-07-31 (session 12)
 
 ## Estado atual
 
 - MVP implementado e verificado: 12 testes Vitest+RTL passando, `tsc --noEmit` limpo, `vite build` ok (54,7 kB gzip).
-- Nome do produto: **Trajeto** (renomeado de Traço a pedido do Flávio, session 2).
+- Nome do produto: **Storyline** (Traço → Trajeto na session 2, Trajeto → Storyline na session 12). O repo, o projeto na Vercel e o domínio continuam `trajeto-app` de propósito — ver session 12.
 - Spec: `docs/superpowers/specs/2026-07-23-strava-overlay-design.md`
 - Plano: `docs/superpowers/plans/2026-07-23-traco-mvp.md`
 
@@ -153,6 +153,15 @@
 
 - **`curl` na produção falha com 403 no túnel** — é o proxy da sessão, não o app. Quem alcança o domínio é o MCP da Vercel (`web_fetch_vercel_url`). Não confundir com app fora do ar.
 - **PR mergeado por squash faz o branch conflitar com o main inteiro** na mudança seguinte: o main tem um commit espremido e o branch ainda tem os originais, então os mesmos arquivos conflitam em bloco. Depois de cada merge, `git checkout -B <branch> origin/main`. Se acontecer, o lado do branch é o certo — mas confira com `git diff <branch> origin/main` que o main não trazia nada além disso antes de resolver em massa.
+
+## Sessão 12 (cont.) — Trajeto vira Storyline
+
+- **Por que:** "Trajeto" prometia rota, e rota virou uma das fontes entre forma, modalidade, dado manual e foto. O nome ficou menor que o produto.
+- **Storyline** escolhido pelo Flávio: `story` é o formato do Instagram e `line` é o traço que o app desenha. Pedido dele que fosse em inglês e que conectasse Strava e Instagram, que é onde o overlay é usado.
+- **Descartados por marca registrada**, mesma lógica que tirou a Hello Kitty do tema kawaii: nome com "Strava" dentro (os termos de API proíbem sugerir endosso) e com "-gram"/"Insta-" (a Meta persegue). "Kudos" sozinho também: é palavra comum, mas no contexto fitness lê como vocabulário do Strava, e é justamente aí que implica afiliação.
+- Conflito conhecido e aceito: existe o **Articulate Storyline**, software de e-learning. Categoria software, mercado diferente, app grátis sem fim comercial.
+- **Alcance da troca: só a marca visível** — título, header, tagline, meta description, nome do arquivo baixado e o texto do quadro vazio, que ainda mandava "escolha a rota". Repo, projeto Vercel e domínio ficam como estão: renomear o projeto muda o domínio de produção, e o `redirect_uri` do Strava sai do `location.origin`. Mexer aí sem atualizar o Authorization Callback Domain no mesmo momento quebra o botão Conectar, que foi a pendência de 4 sessões.
+- `STORAGE_KEY` do Strava segue `trajeto_strava`, com comentário explicando: renomear desconectaria quem já autorizou, e a chave não aparece pra ninguém.
 
 ## Pendências
 

@@ -44,7 +44,7 @@ const salvar = async () => {
 it('sem Web Share, baixa o arquivo direto', async () => {
   semShare()
   await salvar()
-  await waitFor(() => expect(cliques).toEqual(['trajeto-story.png']))
+  await waitFor(() => expect(cliques).toEqual(['storyline-story.png']))
 })
 
 it('share que falha cai pro download em vez de sumir', async () => {
@@ -52,7 +52,7 @@ it('share que falha cai pro download em vez de sumir', async () => {
   // Antes isso era engolido: o botão voltava do "Gerando…" sem entregar nada.
   comShare(() => Promise.reject(new DOMException('user activation', 'NotAllowedError')))
   await salvar()
-  await waitFor(() => expect(cliques).toEqual(['trajeto-story.png']))
+  await waitFor(() => expect(cliques).toEqual(['storyline-story.png']))
 })
 
 it('share cancelado pelo usuário não força download', async () => {

@@ -35,7 +35,7 @@ export default function EditorCanvas() {
           <div className="guide guide-h" style={{ top: `${guides.y}%` }} data-testid="guide-h" />
         )}
         {!route && elements.length === 0 && (
-          <p className="editor-empty">Escolha a rota nas abas abaixo. Depois arraste cada item pra posicionar.</p>
+          <p className="editor-empty">Escolha o que vai no quadro nas abas abaixo. Depois arraste cada item pra posicionar.</p>
         )}
       </div>
     </div>
