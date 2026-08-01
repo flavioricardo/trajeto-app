@@ -63,8 +63,9 @@ it('a foto fica só no navegador: nada de rede nem de armazenamento', () => {
   subir()
 
   expect(fetchSpy).not.toHaveBeenCalled()
-  // nada persistido: recarregar a aba tem que perder a foto
-  expect(localStorage.length).toBe(0)
+  // nada persistido: recarregar a aba tem que perder a foto. O idioma é a
+  // única coisa que o app guarda, então a lista tem que ser exatamente essa.
+  expect(Object.keys(localStorage)).toEqual(['storyline_lang'])
   expect(sessionStorage.length).toBe(0)
 })
 

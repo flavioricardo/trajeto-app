@@ -7,6 +7,7 @@ import { useDrag, clamp } from './useDrag'
 import { snapTo, CANVAS_TARGETS } from '../lib/guides'
 import { Theme, themeById, paintOf } from '../lib/themes'
 import { IconResize, IconX, IconMove } from './icons'
+import { useT } from '../i18n'
 
 /** Controles do canvas: mesmo tamanho nos três, e a espessura padrão do Feather. */
 const ICON = 12
@@ -18,6 +19,7 @@ export default function EditorCanvas() {
   const elements = useAtomValue(elementsAtom)
   const guides = useAtomValue(guidesAtom)
   const photo = useAtomValue(photoAtom)
+  const t = useT()
   const ref = useRef<HTMLDivElement>(null)
 
   return (
@@ -35,7 +37,7 @@ export default function EditorCanvas() {
           <div className="guide guide-h" style={{ top: `${guides.y}%` }} data-testid="guide-h" />
         )}
         {!route && elements.length === 0 && (
-          <p className="editor-empty">Escolha o que vai no quadro nas abas abaixo. Depois arraste cada item pra posicionar.</p>
+          <p className="editor-empty">{t('canvas.empty')}</p>
         )}
       </div>
     </div>
@@ -87,6 +89,7 @@ function RouteBoxEl({ containerRef }: { containerRef: React.RefObject<HTMLDivEle
   const elements = useAtomValue(elementsAtom)
   const style = useAtomValue(styleAtom)
   const theme = themeById(useAtomValue(themeAtom))
+  const t = useT()
 
   const drag = useSnapDrag(
     containerRef,
@@ -116,7 +119,7 @@ function RouteBoxEl({ containerRef }: { containerRef: React.RefObject<HTMLDivEle
       className="draggable route-box"
       style={{ left: `${box.x}%`, top: `${box.y}%`, width: `${box.size}%`, aspectRatio: '1' }}
       tabIndex={0}
-      aria-label="Rota. Arraste pra mover"
+      aria-label={t('canvas.routeAria')}
       {...drag}
     >
       <svg viewBox="0 0 100 100">
@@ -189,7 +192,7 @@ function RouteBoxEl({ containerRef }: { containerRef: React.RefObject<HTMLDivEle
       <span
         className="resize"
         role="slider"
-        aria-label="Redimensionar rota"
+        aria-label={t('canvas.resizeAria')}
         aria-valuenow={Math.round(box.size)}
         onPointerDown={e => { e.stopPropagation(); resize.onPointerDown(e) }}
         onPointerMove={resize.onPointerMove}
@@ -224,6 +227,7 @@ function StatBlock({ el, containerRef }: { el: StatElement; containerRef: React.
   const box = useAtomValue(routeBoxAtom)
   const style = useAtomValue(styleAtom)
   const theme = themeById(useAtomValue(themeAtom))
+  const t = useT()
 
   const drag = useSnapDrag(
     containerRef,
@@ -259,7 +263,9 @@ function StatBlock({ el, containerRef }: { el: StatElement; containerRef: React.
         style={{ fontSize: 'clamp(10px, 3.2cqw, 16px)' }}
         contentEditable
         suppressContentEditableWarning
-        onBlur={e => update({ label: e.currentTarget.textContent ?? '' })}
+        // Renomear na mão solta o rótulo do dicionário: dali em diante o texto
+        // é do usuário, e trocar de idioma não mexe mais nele.
+        onBlur={e => update({ label: e.currentTarget.textContent ?? '', key: undefined })}
       >{el.label}</span>
       <span
         className="value"
@@ -271,7 +277,7 @@ function StatBlock({ el, containerRef }: { el: StatElement; containerRef: React.
       <span className="grab" aria-hidden="true"><IconMove size={ICON} strokeWidth={ICON_STROKE} /></span>
       <button
         className="remove"
-        aria-label={`Remover ${el.label}`}
+        aria-label={`${t('canvas.remove')} ${el.label}`}
         onPointerDown={e => e.stopPropagation()}
         onClick={() => setElements(els => els.filter(e => e.id !== el.id))}
       ><IconX size={ICON} strokeWidth={ICON_STROKE} /></button>

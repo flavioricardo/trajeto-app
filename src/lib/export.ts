@@ -166,6 +166,6 @@ export async function renderOverlay(state: RenderState, size: { w: number; h: nu
   // PNG em imagem fotográfica. Sem foto, o PNG transparente é o produto.
   const [type, quality] = photo ? ['image/jpeg', 0.92] : ['image/png', undefined]
   return new Promise((resolve, reject) =>
-    canvas.toBlob(b => (b ? resolve(b) : reject(new Error('Falha ao gerar a imagem'))), type as string, quality),
+    canvas.toBlob(b => (b ? resolve(b) : reject(new Error('err.render'))), type as string, quality),
   )
 }

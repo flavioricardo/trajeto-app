@@ -5,7 +5,7 @@ export type GpxStats = { distanceM: number; durationS?: number; gainM?: number }
 export function parseGpx(xml: string): { points: LatLon[]; stats: GpxStats } {
   const doc = new DOMParser().parseFromString(xml, 'application/xml')
   const nodes = Array.from(doc.querySelectorAll('trkpt'))
-  if (nodes.length === 0) throw new Error('GPX sem trackpoints')
+  if (nodes.length === 0) throw new Error('err.gpxNoPoints')
 
   const points: LatLon[] = nodes.map(n => {
     const ele = n.querySelector('ele')?.textContent

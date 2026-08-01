@@ -2,6 +2,9 @@ import { atom } from 'jotai'
 import { Trace } from './lib/geo'
 import { ImportKind, ImportResult } from './lib/strava'
 import { OverlayFont } from './fonts'
+import { Key, detectLang, dict } from './i18n'
+import { ThemeId } from './lib/themes'
+import { formatDistance, formatDuration } from './lib/format'
 
 export type Preset = 'story' | 'feed'
 export const PRESETS: Record<Preset, { w: number; h: number; label: string }> = {
@@ -9,8 +12,14 @@ export const PRESETS: Record<Preset, { w: number; h: number; label: string }> = 
   feed: { w: 1080, h: 1080, label: 'Feed 1:1' },
 }
 
-/** Posições e tamanhos sempre em % (0-100) da largura/altura do canvas. */
-export type StatElement = { id: string; label: string; value: string; x: number; y: number }
+/**
+ * Posições e tamanhos sempre em % (0-100) da largura/altura do canvas.
+ *
+ * `key` diz de qual rótulo do dicionário o texto veio, e é o que permite
+ * reescrevê-lo quando o idioma muda. Editar o rótulo na mão apaga a chave: dali
+ * em diante o texto é do usuário, e trocar de idioma não mexe mais nele.
+ */
+export type StatElement = { id: string; key?: Key; label: string; value: string; x: number; y: number }
 export type RouteBox = { x: number; y: number; size: number } // size = % da largura
 export type Style = { routeColor: string; textColor: string; font: OverlayFont; strokeWidth: number }
 
@@ -30,7 +39,7 @@ export const photoAtom = atom<Photo | null>(null)
 export const photoInExportAtom = atom(true)
 
 /** Tema visual do conteúdo do quadro. Ver lib/themes. */
-export const themeAtom = atom<string>('plain')
+export const themeAtom = atom<ThemeId>('plain')
 
 /** Guias de alinhamento visíveis durante o arrasto. Estado efêmero de UI, some ao soltar. */
 export const guidesAtom = atom<{ x: number | null; y: number | null }>({ x: null, y: null })
@@ -39,9 +48,17 @@ export const guidesAtom = atom<{ x: number | null; y: number | null }>({ x: null
 export const importsAtom = atom<Partial<Record<ImportKind, ImportResult>>>({})
 
 let nextId = 1
-export const newStat = (label: string, value: string, x = 8, y = 62): StatElement => ({ id: String(nextId++), label, value, x, y })
+export const newStat = (label: string, value: string, x = 8, y = 62, key?: Key): StatElement =>
+  ({ id: String(nextId++), key, label, value, x, y })
 
-export const elementsAtom = atom<StatElement[]>([
-  newStat('Distância', '4,85 km', 8, 58),
-  newStat('Tempo', '1h 13m', 8, 72),
-])
+/** Exemplo do quadro vazio, no idioma detectado. */
+const demo = (): StatElement[] => {
+  const lang = detectLang()
+  const t = dict(lang)
+  return [
+    newStat(t('stat.distance'), formatDistance(4850, lang), 8, 58, 'stat.distance'),
+    newStat(t('stat.time'), formatDuration(4380), 8, 72, 'stat.time'),
+  ]
+}
+
+export const elementsAtom = atom<StatElement[]>(demo())

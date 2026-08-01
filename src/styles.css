@@ -50,6 +50,21 @@ body {
   color: var(--moss);
 }
 
+/* Troca de idioma: canto do header, discreta mas sempre à mão. */
+.lang-toggle { position: absolute; top: 14px; right: 14px; display: flex; gap: 3px; }
+.lang-toggle button {
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  padding: 4px 9px;
+  border: 1px solid var(--contour);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--moss);
+}
+.lang-toggle button[aria-pressed='true'] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
 .app { max-width: 560px; margin: 0 auto; padding: 0 12px; }
 
 /* ---------- editor ---------- */

@@ -40,10 +40,11 @@ export type TextTheme = {
   shadow?: { paint: Paint; dx: number; dy: number; blur: number }
 }
 
+/** O id é fechado: é ele que casa com `theme.<id>.label` e `.hint` no dicionário. */
+export type ThemeId = 'plain' | '3d' | 'medieval' | 'tech' | 'fofo' | 'carimbo'
+
 export type Theme = {
-  id: string
-  label: string
-  hint: string
+  id: ThemeId
   /** aplicado ao estilo ao escolher o tema; o usuário pode ajustar depois */
   palette: { routeColor: string; textColor: string; font: OverlayFont; strokeWidth: number }
   route: RouteLayer[]
@@ -86,8 +87,6 @@ export function paintOf(paint: Paint, routeColor: string, textColor: string): st
 
 const PLAIN: Theme = {
   id: 'plain',
-  label: 'Nenhum',
-  hint: 'O traço limpo, do jeito que sempre foi.',
   palette: { routeColor: '#FF4D12', textColor: '#FFFFFF', font: 'Archivo Black', strokeWidth: 1.2 },
   route: [{ paint: 'route', width: 1 }],
   text: {},
@@ -96,8 +95,6 @@ const PLAIN: Theme = {
 // Extrusão: cópias escurecidas em diagonal decrescente dão volume sem sombra borrada.
 const TRIDI: Theme = {
   id: '3d',
-  label: '3D',
-  hint: 'Traço com volume, extrudado na diagonal.',
   palette: { routeColor: '#FF4D12', textColor: '#FFFFFF', font: 'Archivo Black', strokeWidth: 1.4 },
   route: [
     { paint: 'routeDark', width: 1, dx: 1.6, dy: 1.6 },
@@ -112,8 +109,6 @@ const TRIDI: Theme = {
 // Manuscrito: tinta sépia sobre contorno escuro, serifa com contraste.
 const MEDIEVAL: Theme = {
   id: 'medieval',
-  label: 'Medieval',
-  hint: 'Tinta e ouro sobre pergaminho, com serifa.',
   palette: { routeColor: '#C9A227', textColor: '#F4E7C8', font: 'Lora', strokeWidth: 1.6 },
   route: [
     { paint: '#3A2A16', width: 2, dx: 0.15, dy: 0.15 },
@@ -126,8 +121,6 @@ const MEDIEVAL: Theme = {
 // Néon: halo largo e fraco, linha média brilhante, núcleo branco fino.
 const TECH: Theme = {
   id: 'tech',
-  label: 'Futurista',
-  hint: 'Néon sobre grade, com monoespaçada.',
   palette: { routeColor: '#22E1FF', textColor: '#EAFDFF', font: 'Space Mono', strokeWidth: 0.9 },
   route: [
     { paint: 'route', width: 2.6, opacity: 0.22, glow: { paint: 'route', blur: 3.2 } },
@@ -141,8 +134,6 @@ const TECH: Theme = {
 // arredondada. Nada de personagem: Hello Kitty é marca registrada da Sanrio.
 const FOFO: Theme = {
   id: 'fofo',
-  label: 'Fofo',
-  hint: 'Rosa pastel com brilho, contorno branco e letra arredondada.',
   palette: { routeColor: '#FF7EB6', textColor: '#FFFFFF', font: 'Baloo 2', strokeWidth: 1.8 },
   route: [
     { paint: 'route', width: 2.4, opacity: 0.4, glow: { paint: 'route', blur: 2.8 } },
@@ -161,8 +152,6 @@ const FOFO: Theme = {
 // moldura: os anéis competiam com o desenho em vez de emoldurar.
 const CARIMBO: Theme = {
   id: 'carimbo',
-  label: 'Carimbo',
-  hint: 'Contorno vazado com sombra riscada a caneta, no desenho da própria fonte.',
   palette: { routeColor: '#8E241D', textColor: '#8E241D', font: 'Rubik Doodle Shadow', strokeWidth: 2.6 },
   route: [
     // Sombra riscada, deslocada pra baixo e pra esquerda como a da fonte.
