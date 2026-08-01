@@ -13,6 +13,10 @@ import { useT } from '../i18n'
 const ICON = 12
 const ICON_STROKE = 2
 
+/** Limites do tamanho da rota, em % da largura do quadro. */
+const SIZE_MIN = 15
+const SIZE_MAX = 140
+
 export default function EditorCanvas() {
   const preset = useAtomValue(presetAtom)
   const route = useAtomValue(routeAtom)
@@ -42,6 +46,33 @@ export default function EditorCanvas() {
       </div>
     </div>
   )
+}
+
+/**
+ * Setas movem o elemento em foco.
+ *
+ * Sem isso o quadro é só do mouse: dá pra focar cada item pelo teclado e não
+ * dá pra posicionar nenhum, que é a interação central do app.
+ *
+ * Aqui não tem encaixe. O passo é menor que o limiar das guias, então o ímã
+ * puxaria de volta a cada tecla e prenderia o item no alvo — o mesmo problema
+ * que o arrasto resolve guardando a posição livre à parte. Seta é ajuste fino;
+ * quem quer alinhar usa o arrasto.
+ */
+function useNudge(commit: (dx: number, dy: number) => void) {
+  return (e: React.KeyboardEvent) => {
+    // Só quando o foco está no bloco. Dentro dele há texto editável, e lá as
+    // setas são do cursor.
+    if (e.target !== e.currentTarget) return
+    const passo = e.shiftKey ? 5 : 1
+    const d: Record<string, [number, number]> = {
+      ArrowLeft: [-passo, 0], ArrowRight: [passo, 0], ArrowUp: [0, -passo], ArrowDown: [0, passo],
+    }
+    const mov = d[e.key]
+    if (!mov) return
+    e.preventDefault()
+    commit(mov[0], mov[1])
+  }
 }
 
 /**
@@ -102,6 +133,24 @@ function RouteBoxEl({ containerRef }: { containerRef: React.RefObject<HTMLDivEle
     (x, y) => setBox(b => ({ ...b, x, y })),
   )
   const resize = useDrag(containerRef, dx => setBox(b => ({ ...b, size: clamp(b.size + dx, 15, 140) })))
+  const nudge = useNudge((dx, dy) => setBox(b => ({
+    ...b,
+    x: clamp(b.x + dx, -20, 100),
+    y: clamp(b.y + dy, -20, 100),
+  })))
+
+  /** O controle de tamanho é um slider: teclado tem que mexer nele igual ao mouse. */
+  const resizeKeys = (e: React.KeyboardEvent) => {
+    const passo = e.shiftKey ? 10 : 2
+    const d: Record<string, number> = {
+      ArrowLeft: -passo, ArrowDown: -passo, ArrowRight: passo, ArrowUp: passo,
+    }
+    const alvo = e.key === 'Home' ? SIZE_MIN : e.key === 'End' ? SIZE_MAX : null
+    if (alvo == null && d[e.key] == null) return
+    e.preventDefault()
+    e.stopPropagation()
+    setBox(b => ({ ...b, size: alvo ?? clamp(b.size + d[e.key], SIZE_MIN, SIZE_MAX) }))
+  }
 
   // As medidas do tema e da espessura são % da largura do quadro; o viewBox aqui
   // são 100 unidades da largura da caixa. Converter mantém editor e PNG iguais —
@@ -120,6 +169,7 @@ function RouteBoxEl({ containerRef }: { containerRef: React.RefObject<HTMLDivEle
       style={{ left: `${box.x}%`, top: `${box.y}%`, width: `${box.size}%`, aspectRatio: '1' }}
       tabIndex={0}
       aria-label={t('canvas.routeAria')}
+      onKeyDown={nudge}
       {...drag}
     >
       <svg viewBox="0 0 100 100">
@@ -192,8 +242,12 @@ function RouteBoxEl({ containerRef }: { containerRef: React.RefObject<HTMLDivEle
       <span
         className="resize"
         role="slider"
+        tabIndex={0}
         aria-label={t('canvas.resizeAria')}
+        aria-valuemin={SIZE_MIN}
+        aria-valuemax={SIZE_MAX}
         aria-valuenow={Math.round(box.size)}
+        onKeyDown={resizeKeys}
         onPointerDown={e => { e.stopPropagation(); resize.onPointerDown(e) }}
         onPointerMove={resize.onPointerMove}
         onPointerUp={resize.onPointerUp}
@@ -242,6 +296,9 @@ function StatBlock({ el, containerRef }: { el: StatElement; containerRef: React.
     { min: 0, max: 95 },
     (x, y) => setElements(els => els.map(e => (e.id === el.id ? { ...e, x, y } : e))),
   )
+  const nudge = useNudge((dx, dy) =>
+    setElements(els => els.map(e =>
+      e.id === el.id ? { ...e, x: clamp(e.x + dx, 0, 95), y: clamp(e.y + dy, 0, 95) } : e)))
   const update = (patch: Partial<StatElement>) =>
     setElements(els => els.map(e => (e.id === el.id ? { ...e, ...patch } : e)))
 
@@ -256,6 +313,8 @@ function StatBlock({ el, containerRef }: { el: StatElement; containerRef: React.
         ...textCss(theme, style.routeColor, style.textColor),
       }}
       tabIndex={0}
+      aria-label={`${el.label}. ${t('canvas.moveAria')}`}
+      onKeyDown={nudge}
       {...drag}
     >
       <span
