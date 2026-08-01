@@ -7,6 +7,8 @@ import { normalizePoints, totalDistance, LatLon } from '../lib/geo'
 import { searchPlaces, fetchRoute, Place } from '../lib/api'
 import { formatDistance, formatDuration, formatPace } from '../lib/format'
 import { useT, useLang, errorText, Key } from '../i18n'
+import FileField from './FileField'
+import { Trace } from '../lib/geo'
 
 export default function RouteSource() {
   const [tab, setTab] = useState<'gpx' | 'place' | 'ab' | 'shapes'>('gpx')
@@ -63,10 +65,7 @@ function GpxTab() {
 
   return (
     <div>
-      <div className="field">
-        <label htmlFor="gpx">{t('gpx.label')}</label>
-        <input id="gpx" type="file" accept=".gpx,application/gpx+xml" onChange={e => onFile(e.target.files?.[0])} />
-      </div>
+      <FileField id="gpx" accept=".gpx,application/gpx+xml" label={t('gpx.label')} onFile={onFile} />
       {error && <p className="error" role="alert">{error}. {t('gpx.fallback')}</p>}
       <p className="hint">{t('gpx.hint')}</p>
     </div>
@@ -153,11 +152,12 @@ function ShapesTab() {
       {groups.map(([title, shapes]) => (
         <div className="field" key={title}>
           <label>{t(title)}</label>
-          <div className="shape-grid">
+          <div className="shape-grid previews">
             {Object.entries(shapes).map(([name, trace]) => (
               // Compara por referência: a forma escolhida é guardada como está, então
               // rota vinda de GPX, Strava ou local não casa com nenhuma e nada fica marcado.
               <button key={name} className="btn" aria-pressed={route === trace} onClick={() => setRoute(trace)}>
+                <ShapePreview trace={trace} />
                 {t(`shape.${name}` as Key)}
               </button>
             ))}
@@ -166,6 +166,22 @@ function ShapesTab() {
       ))}
       <p className="hint">{t('shapes.hint')}</p>
     </div>
+  )
+}
+
+/**
+ * O desenho da própria forma dentro do botão. Escolher forma é escolher
+ * desenho, então mostrar o desenho é mais rápido de ler que o nome — e o traço
+ * herda a cor do botão, então o selecionado inverte junto.
+ */
+function ShapePreview({ trace }: { trace: Trace }) {
+  const d = trace
+    .map(sub => sub.map((p, i) => `${i === 0 ? 'M' : 'L'}${(p.x * 100).toFixed(1)} ${(p.y * 100).toFixed(1)}`).join(' '))
+    .join(' ')
+  return (
+    <svg viewBox="-8 -8 116 116" aria-hidden="true">
+      <path d={d} fill="none" stroke="currentColor" strokeWidth={9} strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   )
 }
 

@@ -80,7 +80,7 @@ const STRINGS = {
   'tab.place': ['Local', 'Place'],
   'tab.ab': ['A → B', 'A → B'],
   'tab.shapes': ['Formas', 'Shapes'],
-  'gpx.label': ['Arquivo GPX da atividade', 'Activity GPX file'],
+  'gpx.label': ['Escolha o GPX da atividade', 'Choose the activity GPX'],
   'gpx.hint': [
     'No Strava: atividade, menu, Exportar GPX. No Wikiloc: botão Download, Arquivo GPX. Distância, tempo, elevação e pace entram sozinhos.',
     'On Strava: open the activity, menu, Export GPX. On Wikiloc: Download button, GPX file. Distance, time, elevation and pace fill themselves in.',
