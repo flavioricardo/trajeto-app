@@ -31,7 +31,7 @@ export function extractShape(g: GeoJson | undefined): LatLon[] | null {
 export async function searchPlaces(q: string): Promise<Place[]> {
   const url = `https://nominatim.openstreetmap.org/search?format=json&limit=8&polygon_geojson=1&accept-language=pt-BR&q=${encodeURIComponent(q)}`
   const res = await fetch(url, { headers: { Accept: 'application/json' } })
-  if (!res.ok) throw new Error('Busca de local falhou')
+  if (!res.ok) throw new Error('err.search')
   const data: { display_name: string; lat: string; lon: string; geojson?: GeoJson }[] = await res.json()
   return data.map(d => ({
     name: d.display_name,
@@ -45,10 +45,10 @@ export async function searchPlaces(q: string): Promise<Place[]> {
 export async function fetchRoute(a: Place, b: Place): Promise<{ points: LatLon[]; distanceM: number; durationS: number }> {
   const url = `https://router.project-osrm.org/route/v1/foot/${a.lon},${a.lat};${b.lon},${b.lat}?overview=full&geometries=geojson`
   const res = await fetch(url)
-  if (!res.ok) throw new Error('Cálculo de rota falhou')
+  if (!res.ok) throw new Error('err.routing')
   const data = await res.json()
   const route = data.routes?.[0]
-  if (!route) throw new Error('Nenhuma rota encontrada entre os pontos')
+  if (!route) throw new Error('err.noRoute')
   const points: LatLon[] = route.geometry.coordinates.map(([lon, lat]: [number, number]) => ({ lat, lon }))
   return { points, distanceM: route.distance, durationS: route.duration }
 }

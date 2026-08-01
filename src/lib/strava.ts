@@ -73,9 +73,9 @@ export const SPORT_SHAPE: Record<string, string> = {
 
 async function get<T>(path: string, token: string): Promise<T> {
   const res = await fetch(`${API}${path}`, { headers: { Authorization: `Bearer ${token}` } })
-  if (res.status === 401) throw new Error('Sessão do Strava expirou. Conecte de novo')
-  if (res.status === 404) throw new Error('Não encontrado. A atividade é sua e está visível?')
-  if (!res.ok) throw new Error('O Strava respondeu com erro')
+  if (res.status === 401) throw new Error('err.stravaExpired')
+  if (res.status === 404) throw new Error('err.stravaNotFound')
+  if (!res.ok) throw new Error('err.strava')
   return res.json()
 }
 
@@ -120,7 +120,7 @@ export async function getActivity(id: string, token: string): Promise<ImportResu
 export async function resolveShortLink(url: string): Promise<string> {
   const res = await fetch(`/api/strava-resolve?url=${encodeURIComponent(url)}`)
   const data = await res.json().catch(() => ({}))
-  if (!res.ok || !data.id) throw new Error(data.error ?? 'Não deu pra abrir esse link curto')
+  if (!res.ok || !data.id) throw new Error(data.error ?? 'err.stravaShortLink')
   return String(data.id)
 }
 

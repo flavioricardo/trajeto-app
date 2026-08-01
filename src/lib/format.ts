@@ -1,7 +1,11 @@
-const nf = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+import { Lang, T, htmlLang } from '../i18n'
 
-export function formatDistance(m: number): string {
-  return `${nf.format(m / 1000)} km`
+/** Separador decimal e agrupamento saem do idioma escolhido, não do navegador. */
+const nf = (lang: Lang, digits: number) =>
+  new Intl.NumberFormat(htmlLang(lang), { minimumFractionDigits: digits, maximumFractionDigits: digits })
+
+export function formatDistance(m: number, lang: Lang): string {
+  return `${nf(lang, 2).format(m / 1000)} km`
 }
 
 export function formatDuration(s: number): string {
@@ -11,16 +15,16 @@ export function formatDuration(s: number): string {
 }
 
 /** Quanto o tempo real ficou abaixo (−) ou acima (+) do previsto pela rota. */
-export function formatDelta(estimatedS: number, actualS: number): string {
+export function formatDelta(estimatedS: number, actualS: number, t: T): string {
   const min = Math.round((actualS - estimatedS) / 60)
-  if (min === 0) return 'no previsto'
+  if (min === 0) return t('stat.onTarget')
   return `${min < 0 ? '−' : '+'}${Math.abs(min)} min`
 }
 
 /** Velocidade média em km/h — leitura de quem pedala, não pace. */
-export function formatSpeed(distanceM: number, durationS: number): string {
+export function formatSpeed(distanceM: number, durationS: number, lang: Lang): string {
   const kmh = distanceM / 1000 / (durationS / 3600)
-  return `${kmh.toFixed(1).replace('.', ',')} km/h`
+  return `${nf(lang, 1).format(kmh)} km/h`
 }
 
 /** Pace de natação: por 100 m, que é como a piscina mede. */

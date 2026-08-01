@@ -163,6 +163,18 @@
 - **Alcance da troca: só a marca visível** — título, header, tagline, meta description, nome do arquivo baixado e o texto do quadro vazio, que ainda mandava "escolha a rota". Repo, projeto Vercel e domínio ficam como estão: renomear o projeto muda o domínio de produção, e o `redirect_uri` do Strava sai do `location.origin`. Mexer aí sem atualizar o Authorization Callback Domain no mesmo momento quebra o botão Conectar, que foi a pendência de 4 sessões.
 - `STORAGE_KEY` do Strava segue `trajeto_strava`, com comentário explicando: renomear desconectaria quem já autorizou, e a chave não aparece pra ninguém.
 
+## Sessão 12 (cont.) — idioma duplo, pt-BR e inglês
+
+- **Um dicionário só**, `src/i18n.ts`, com tupla `[pt, en]` por entrada. Ver os dois lado a lado é o que torna revisão de tradução possível, e o `satisfies` no fim quebra o build se faltar um dos dois.
+- Fora dali não sobra texto de interface. **As bibliotecas lançam a chave como mensagem de erro** e quem mostra é que traduz (`errorText`). O que vem de fora (rede, navegador) passa como está: engolir seria pior que mostrar em inglês.
+- **Detecção pelo `navigator.language`**, escolha manual no canto do header, persistida em `storyline_lang`. O `<html lang>`, o `<title>` e a meta description acompanham.
+- **O `StatElement` ganhou `key`**, que diz de qual rótulo do dicionário o texto veio. É o que permite reescrever os rótulos na troca de idioma — e eles vão pra imagem exportada, então isso é o ponto da feature, não detalhe. **Renomear o rótulo à mão apaga a chave:** dali em diante o texto é do usuário e o idioma não mexe mais nele.
+- **O valor não dá pra reformatar pela origem**, porque o elemento guarda só o texto. Muda só o separador decimal (`localizeNumbers`), que é a única diferença entre pt e en nos formatos que o app produz — "1h 13m", `15'03"/km` e as unidades se escrevem igual.
+- `ThemeId` virou união fechada, então `theme.<id>.label` é verificado em tempo de compilação: tema novo sem tradução não compila.
+- **Os testes fixam o idioma em pt** num `setupFiles`. Sem isso a suíte passaria a depender do locale da máquina — em CI vem `en-US` e todo `getByText` em português quebraria. O inglês tem teste próprio, que troca pela interface.
+- Unidade continua métrica nos dois idiomas. Milha é decisão de unidade, não de idioma (brasileiro não quer milha, inglês pode querer km), então seria um controle à parte.
+- 113 testes, bundle 78,4 → 82,1 kB gzip.
+
 ## Pendências
 
 - [x] Revisar spec de design — resolvido 2026-07-23 (aprovação delegada, session 2)

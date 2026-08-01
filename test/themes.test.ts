@@ -1,4 +1,5 @@
 import { THEMES, themeById, shade, paintOf } from '../src/lib/themes'
+import { dict } from '../src/i18n'
 import { OVERLAY_FONTS } from '../src/fonts'
 
 it('shade escurece e clareia, e ignora entrada inválida', () => {
@@ -23,8 +24,8 @@ it('todo tema tem ao menos uma camada de traço e paleta completa', () => {
     expect(t.palette.routeColor, t.id).toMatch(/^#[\da-f]{6}$/i)
     expect(t.palette.textColor, t.id).toMatch(/^#[\da-f]{6}$/i)
     expect(t.palette.strokeWidth, t.id).toBeGreaterThan(0)
-    expect(t.label, t.id).toBeTruthy()
-    expect(t.hint, t.id).toBeTruthy()
+    expect(dict('pt')(`theme.${t.id}.label`), t.id).toBeTruthy()
+    expect(dict('pt')(`theme.${t.id}.hint`), t.id).toBeTruthy()
   }
 })
 

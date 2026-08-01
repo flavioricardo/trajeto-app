@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import EditorCanvas from './EditorCanvas'
 import RouteSource from './RouteSource'
@@ -12,8 +12,10 @@ import { renderOverlay } from '../lib/export'
 import { THEMES, Theme, themeById } from '../lib/themes'
 import { loadImage } from '../lib/photo'
 import { IconPlus, IconDownload } from './icons'
+import { langAtom, useT, useLang, errorText, localizeNumbers, Lang, dict, htmlLang } from '../i18n'
 
 export default function App() {
+  useDocumentLang()
   return (
     <>
       <Header />
@@ -32,14 +34,57 @@ export default function App() {
 }
 
 function Header() {
+  const t = useT()
   return (
     <header className="header">
       <Contours />
       {/* O destaque cai em "line", que é o traço que o app desenha. */}
       <h1 className="brand">Story<em>line</em></h1>
-      <p className="tagline">Sua atividade vira imagem pro story. Grátis e sem cadastro.</p>
+      <p className="tagline">{t('tagline')}</p>
+      <LangToggle />
     </header>
   )
+}
+
+/**
+ * Troca de idioma. Os rótulos que vieram do dicionário são reescritos; o que o
+ * usuário renomeou perdeu a chave e fica como está. O valor não dá pra
+ * reformatar pela origem, então só o separador decimal acompanha.
+ */
+function LangToggle() {
+  const [lang, setLang] = useAtom(langAtom)
+  const setElements = useSetAtom(elementsAtom)
+  const t = useT()
+
+  const pick = (next: Lang) => {
+    if (next === lang) return
+    setLang(next)
+    const tn = dict(next)
+    setElements(els => els.map(e => ({
+      ...e,
+      label: e.key ? tn(e.key) : e.label,
+      value: localizeNumbers(e.value, next),
+    })))
+  }
+
+  return (
+    <div className="lang-toggle" role="group" aria-label={t('lang.aria')}>
+      {(['pt', 'en'] as Lang[]).map(l => (
+        <button key={l} aria-pressed={l === lang} onClick={() => pick(l)}>{l.toUpperCase()}</button>
+      ))}
+    </div>
+  )
+}
+
+/** O documento também é bilíngue: título, descrição e o lang da raiz. */
+function useDocumentLang() {
+  const lang = useLang()
+  useEffect(() => {
+    const t = dict(lang)
+    document.documentElement.lang = htmlLang(lang)
+    document.title = t('doc.title')
+    document.querySelector('meta[name=description]')?.setAttribute('content', t('doc.description'))
+  }, [lang])
 }
 
 /** Assinatura visual: curvas de nível geradas uma vez. */
@@ -62,14 +107,15 @@ function Contours() {
 
 function StatsPanel() {
   const [elements, setElements] = useAtom(elementsAtom)
+  const t = useT()
   return (
     <section className="card">
-      <h2>Estatísticas</h2>
-      <p className="hint">Toque no texto pra editar. Arraste no quadro pra posicionar.</p>
+      <h2>{t('panel.stats')}</h2>
+      <p className="hint">{t('stats.hint')}</p>
       <div className="row" style={{ marginTop: 10 }}>
-        <button className="btn" onClick={() => setElements(els => [...els, newStat('Título', 'valor')])}><IconPlus size={14} /> Adicionar dado</button>
+        <button className="btn" onClick={() => setElements(els => [...els, newStat(t('stats.newLabel'), t('stats.newValue'))])}><IconPlus size={14} /> {t('stats.add')}</button>
         {elements.length > 0 && (
-          <button className="btn" onClick={() => setElements([])}>Limpar tudo</button>
+          <button className="btn" onClick={() => setElements([])}>{t('stats.clear')}</button>
         )}
       </div>
     </section>
@@ -79,6 +125,7 @@ function StatsPanel() {
 function PhotoPanel() {
   const [photo, setPhoto] = useAtom(photoAtom)
   const [incluir, setIncluir] = useAtom(photoInExportAtom)
+  const t = useT()
 
   // O object URL anterior precisa ser revogado na mão: sem isso o blob fica
   // preso na memória da aba até fechar.
@@ -96,33 +143,28 @@ function PhotoPanel() {
 
   return (
     <section className="card">
-      <h2>Foto de fundo</h2>
+      <h2>{t('panel.photo')}</h2>
       {photo ? (
         <>
           <p className="hint" style={{ marginBottom: 10 }}>{photo.name}</p>
           <div className="row">
-            <button className="btn" onClick={() => swap(null)}>Remover foto</button>
+            <button className="btn" onClick={() => swap(null)}>{t('photo.remove')}</button>
             <label className="check">
               <input type="checkbox" checked={incluir} onChange={e => setIncluir(e.target.checked)} />
-              Salvar a imagem com a foto
+              {t('photo.include')}
             </label>
           </div>
           <p className="hint">
-            {incluir
-              ? 'Sai um JPEG com a foto e o overlay juntos, pronto pra postar.'
-              : 'Sai o PNG transparente de sempre. A foto fica só na prévia, pra você conferir o contraste.'}
+            {t(incluir ? 'photo.hintWith' : 'photo.hintWithout')}
           </p>
         </>
       ) : (
         <>
           <div className="field">
-            <label htmlFor="photo">Escolha uma foto</label>
+            <label htmlFor="photo">{t('photo.choose')}</label>
             <input id="photo" type="file" accept="image/*" onChange={e => onFile(e.target.files?.[0])} />
           </div>
-          <p className="hint">
-            A foto entra atrás do overlay pra você ver como fica. Ela não sai do seu aparelho e some quando você
-            fecha a aba: nada é enviado nem guardado.
-          </p>
+          <p className="hint">{t('photo.privacy')}</p>
         </>
       )}
     </section>
@@ -132,54 +174,55 @@ function PhotoPanel() {
 function ThemePanel() {
   const [theme, setTheme] = useAtom(themeAtom)
   const setStyle = useSetAtom(styleAtom)
-  const current = themeById(theme)
+  const t = useT()
 
   // Escolher o tema troca a paleta e a fonte; os controles de Estilo seguem
   // valendo pra ajustar depois, e as camadas do tema acompanham a cor nova.
-  const pick = (t: Theme) => {
-    setTheme(t.id)
-    setStyle(s => ({ ...s, ...t.palette }))
+  const pick = (th: Theme) => {
+    setTheme(th.id)
+    setStyle(s => ({ ...s, ...th.palette }))
   }
 
   return (
     <section className="card">
-      <h2>Tema</h2>
+      <h2>{t('panel.theme')}</h2>
       <div className="shape-grid">
-        {THEMES.map(t => (
-          <button key={t.id} className="btn" aria-pressed={t.id === theme} onClick={() => pick(t)}>
-            {t.label}
+        {THEMES.map(th => (
+          <button key={th.id} className="btn" aria-pressed={th.id === theme} onClick={() => pick(th)}>
+            {t(`theme.${th.id}.label` as const)}
           </button>
         ))}
       </div>
-      <p className="hint">{current.hint}</p>
+      <p className="hint">{t(`theme.${theme}.hint` as const)}</p>
     </section>
   )
 }
 
 function StylePanel() {
   const [style, setStyle] = useAtom(styleAtom)
+  const t = useT()
   return (
     <section className="card">
-      <h2>Estilo</h2>
+      <h2>{t('panel.style')}</h2>
       <div className="row">
         <div className="field">
-          <label htmlFor="route-color">Cor da rota</label>
+          <label htmlFor="route-color">{t('style.routeColor')}</label>
           <input id="route-color" type="color" value={style.routeColor}
             onChange={e => setStyle(s => ({ ...s, routeColor: e.target.value }))} />
         </div>
         <div className="field">
-          <label htmlFor="text-color">Cor do texto</label>
+          <label htmlFor="text-color">{t('style.textColor')}</label>
           <input id="text-color" type="color" value={style.textColor}
             onChange={e => setStyle(s => ({ ...s, textColor: e.target.value }))} />
         </div>
         <div className="field">
-          <label htmlFor="stroke">Traço: {style.strokeWidth.toFixed(1)}</label>
+          <label htmlFor="stroke">{t('style.stroke')}: {style.strokeWidth.toFixed(1)}</label>
           <input id="stroke" type="range" min="0.4" max="3" step="0.2" value={style.strokeWidth}
             onChange={e => setStyle(s => ({ ...s, strokeWidth: Number(e.target.value) }))} />
         </div>
       </div>
       <div className="field">
-        <label htmlFor="font">Fonte</label>
+        <label htmlFor="font">{t('style.font')}</label>
         <select id="font" value={style.font}
           onChange={e => setStyle(s => ({ ...s, font: e.target.value as OverlayFont }))}>
           {OVERLAY_FONTS.map(f => <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>)}
@@ -212,6 +255,7 @@ function ExportBar() {
   const comFoto = useAtomValue(photoInExportAtom)
   const [busy, setBusy] = useState(false)
   const [erro, setErro] = useState('')
+  const t = useT()
 
   const doExport = async () => {
     setBusy(true)
@@ -237,7 +281,7 @@ function ExportBar() {
       }
       baixar(blob, nome)
     } catch (e) {
-      setErro(e instanceof Error ? e.message : 'Não deu pra gerar a imagem')
+      setErro(errorText(e, t, 'err.render'))
     } finally {
       setBusy(false)
     }
@@ -245,7 +289,7 @@ function ExportBar() {
 
   return (
     <div className="export-bar">
-      <div className="preset-toggle" role="group" aria-label="Formato">
+      <div className="preset-toggle" role="group" aria-label={t('export.format')}>
         {(Object.keys(PRESETS) as Preset[]).map(p => (
           <button key={p} aria-pressed={preset === p} onClick={() => setPreset(p)}>
             {PRESETS[p].label}
@@ -253,7 +297,7 @@ function ExportBar() {
         ))}
       </div>
       <button className="btn primary" disabled={busy || (elements.length === 0 && !route)} onClick={doExport}>
-        {busy ? 'Gerando…' : <><IconDownload size={15} /> Salvar {photo && comFoto ? 'JPG' : 'PNG'}</>}
+        {busy ? t('export.busy') : <><IconDownload size={15} /> {t('export.save')} {photo && comFoto ? 'JPG' : 'PNG'}</>}
       </button>
       {erro && <p className="error export-error" role="alert">{erro}</p>}
     </div>

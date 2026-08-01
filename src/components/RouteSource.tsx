@@ -6,16 +6,18 @@ import { ACTIVITY_SHAPES, FUN_SHAPES } from '../lib/shapes'
 import { normalizePoints, totalDistance, LatLon } from '../lib/geo'
 import { searchPlaces, fetchRoute, Place } from '../lib/api'
 import { formatDistance, formatDuration, formatPace } from '../lib/format'
+import { useT, useLang, errorText, Key } from '../i18n'
 
 export default function RouteSource() {
   const [tab, setTab] = useState<'gpx' | 'place' | 'ab' | 'shapes'>('gpx')
-  const tabs = [['gpx', 'GPX'], ['place', 'Local'], ['ab', 'A → B'], ['shapes', 'Formas']] as const
+  const t = useT()
+  const tabs = ['gpx', 'place', 'ab', 'shapes'] as const
   return (
     <section className="card">
-      <h2>Rota</h2>
+      <h2>{t('panel.route')}</h2>
       <div className="tabs" role="tablist">
-        {tabs.map(([id, label]) => (
-          <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}>{label}</button>
+        {tabs.map(id => (
+          <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}>{t(`tab.${id}`)}</button>
         ))}
       </div>
       {tab === 'gpx' && <GpxTab />}
@@ -29,12 +31,14 @@ export default function RouteSource() {
 /** Pré-preenche stats vindos do GPX/OSRM só se o usuário ainda não mexeu. */
 function usePrefillStats() {
   const setElements = useSetAtom(elementsAtom)
+  const lang = useLang()
+  const t = useT()
   return (stats: GpxStats) => {
     const els = []
-    els.push(newStat('Distância', formatDistance(stats.distanceM), 8, 56))
-    if (stats.durationS) els.push(newStat('Tempo', formatDuration(stats.durationS), 8, 70))
-    if (stats.gainM != null) els.push(newStat('Elevação', `${Math.round(stats.gainM)} m`, 55, 56))
-    if (stats.durationS) els.push(newStat('Pace', formatPace(stats.distanceM, stats.durationS), 55, 70))
+    els.push(newStat(t('stat.distance'), formatDistance(stats.distanceM, lang), 8, 56, 'stat.distance'))
+    if (stats.durationS) els.push(newStat(t('stat.time'), formatDuration(stats.durationS), 8, 70, 'stat.time'))
+    if (stats.gainM != null) els.push(newStat(t('stat.elevation'), `${Math.round(stats.gainM)} m`, 55, 56, 'stat.elevation'))
+    if (stats.durationS) els.push(newStat(t('stat.pace'), formatPace(stats.distanceM, stats.durationS), 55, 70, 'stat.pace'))
     setElements(els)
   }
 }
@@ -43,6 +47,7 @@ function GpxTab() {
   const setRoute = useSetAtom(routeAtom)
   const prefill = usePrefillStats()
   const [error, setError] = useState('')
+  const t = useT()
 
   const onFile = async (file: File | undefined) => {
     if (!file) return
@@ -52,18 +57,18 @@ function GpxTab() {
       setRoute([normalizePoints(points)])
       prefill(stats)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Arquivo GPX inválido')
+      setError(errorText(e, t, 'err.gpx'))
     }
   }
 
   return (
     <div>
       <div className="field">
-        <label htmlFor="gpx">Arquivo GPX da atividade</label>
+        <label htmlFor="gpx">{t('gpx.label')}</label>
         <input id="gpx" type="file" accept=".gpx,application/gpx+xml" onChange={e => onFile(e.target.files?.[0])} />
       </div>
-      {error && <p className="error" role="alert">{error}. Tente o modo "Início e fim".</p>}
-      <p className="hint">No Strava: atividade, menu, Exportar GPX. No Wikiloc: botão Download, Arquivo GPX. Distância, tempo, elevação e pace entram sozinhos.</p>
+      {error && <p className="error" role="alert">{error}. {t('gpx.fallback')}</p>}
+      <p className="hint">{t('gpx.hint')}</p>
     </div>
   )
 }
@@ -73,6 +78,7 @@ function PlaceInput({ label, onPick }: { label: string; onPick: (p: Place) => vo
   const [results, setResults] = useState<Place[]>([])
   const [picked, setPicked] = useState<Place | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout>>()
+  const t = useT()
 
   useEffect(() => () => clearTimeout(timer.current), [])
 
@@ -94,7 +100,7 @@ function PlaceInput({ label, onPick }: { label: string; onPick: (p: Place) => vo
         type="search"
         value={picked ? picked.name : q}
         onChange={e => onChange(e.target.value)}
-        placeholder="Ex.: Lapa do Índio, Cordisburgo"
+        placeholder={t('place.placeholder')}
       />
       {!picked && results.length > 0 && (
         <ul className="suggest">
@@ -113,11 +119,12 @@ function PlaceTab() {
   const setRoute = useSetAtom(routeAtom)
   const prefill = usePrefillStats()
   const [error, setError] = useState('')
+  const t = useT()
 
   const onPick = (p: Place) => {
     setError('')
     if (!p.shape || p.shape.length < 3) {
-      setError('Esse lugar ainda não tem traçado no OpenStreetMap')
+      setError(t('err.placeNoShape'))
       return
     }
     setRoute([normalizePoints(p.shape)])
@@ -126,37 +133,38 @@ function PlaceTab() {
 
   return (
     <div>
-      <PlaceInput label="Trilha, praça, pista, parque…" onPick={onPick} />
-      {error && <p className="error" role="alert">{error}. Baixe o GPX da trilha no Wikiloc ou no Strava e use a aba GPX.</p>}
-      <p className="hint">Busca no OpenStreetMap. Trilhas, praças e pistas mapeadas viram traçado na hora.</p>
+      <PlaceInput label={t('place.label')} onPick={onPick} />
+      {error && <p className="error" role="alert">{error}. {t('place.fallback')}</p>}
+      <p className="hint">{t('place.hint')}</p>
     </div>
   )
 }
 
 function ShapesTab() {
   const [route, setRoute] = useAtom(routeAtom)
+  const t = useT()
   const groups = [
-    ['Modalidades', ACTIVITY_SHAPES],
-    ['Formas', FUN_SHAPES],
+    ['shapes.activities', ACTIVITY_SHAPES],
+    ['shapes.fun', FUN_SHAPES],
   ] as const
 
   return (
     <div>
       {groups.map(([title, shapes]) => (
         <div className="field" key={title}>
-          <label>{title}</label>
+          <label>{t(title)}</label>
           <div className="shape-grid">
             {Object.entries(shapes).map(([name, trace]) => (
               // Compara por referência: a forma escolhida é guardada como está, então
               // rota vinda de GPX, Strava ou local não casa com nenhuma e nada fica marcado.
               <button key={name} className="btn" aria-pressed={route === trace} onClick={() => setRoute(trace)}>
-                {name}
+                {t(`shape.${name}` as Key)}
               </button>
             ))}
           </div>
         </div>
       ))}
-      <p className="hint">A forma usa a mesma cor e espessura da rota.</p>
+      <p className="hint">{t('shapes.hint')}</p>
     </div>
   )
 }
@@ -168,6 +176,7 @@ function AbTab() {
   const [b, setB] = useState<Place | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const t = useT()
 
   const go = async () => {
     if (!a || !b) return
@@ -178,7 +187,7 @@ function AbTab() {
       setRoute([normalizePoints(points as LatLon[])])
       prefill({ distanceM, durationS })
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Não deu pra traçar a rota')
+      setError(errorText(e, t, 'err.routeFailed'))
     } finally {
       setBusy(false)
     }
@@ -186,12 +195,12 @@ function AbTab() {
 
   return (
     <div>
-      <PlaceInput label="Início" onPick={setA} />
-      <PlaceInput label="Fim" onPick={setB} />
+      <PlaceInput label={t('ab.start')} onPick={setA} />
+      <PlaceInput label={t('ab.end')} onPick={setB} />
       <button className="btn" disabled={!a || !b || busy} onClick={go}>
-        {busy ? 'Traçando…' : 'Traçar rota'}
+        {busy ? t('ab.busy') : t('ab.go')}
       </button>
-      {error && <p className="error" role="alert">{error}. Se o serviço estiver fora do ar, use um arquivo GPX.</p>}
+      {error && <p className="error" role="alert">{error}. {t('ab.fallback')}</p>}
     </div>
   )
 }

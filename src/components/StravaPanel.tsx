@@ -11,6 +11,7 @@ import {
 import { SHAPES } from '../lib/shapes'
 import { Trace } from '../lib/geo'
 import { searchPlaces, Place } from '../lib/api'
+import { useT, useLang, errorText, Key, T, Lang } from '../i18n'
 
 // Mantém o nome antigo do app de propósito: renomear a chave desconectaria
 // do Strava quem já autorizou, e ela não aparece pra ninguém.
@@ -30,15 +31,16 @@ async function tokenRequest(body: object): Promise<StravaToken> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
-  if (!res.ok) throw new Error('Falha na autenticação com o Strava')
+  if (!res.ok) throw new Error('err.stravaAuth')
   const data = await res.json()
-  if (!data.access_token) throw new Error('Falha na autenticação com o Strava')
+  if (!data.access_token) throw new Error('err.stravaAuth')
   return { ...loadToken(), ...data }
 }
 
 export default function StravaPanel() {
   const [token, setToken] = useState<StravaToken | null>(loadToken)
   const [error, setError] = useState('')
+  const t = useT()
 
   // Callback do OAuth: ?code= na URL
   useEffect(() => {
@@ -47,14 +49,14 @@ export default function StravaPanel() {
     history.replaceState(null, '', location.pathname)
     tokenRequest({ code })
       .then(t => { saveToken(t); setToken(t) })
-      .catch(e => setError(e.message))
+      .catch(e => setError(errorText(e, t)))
   }, [])
 
   const connect = async () => {
     setError('')
     try {
       const { clientId } = await (await fetch('/api/strava-config')).json()
-      if (!clientId) throw new Error('Integração com o Strava ainda não configurada neste servidor')
+      if (!clientId) throw new Error('err.stravaConfig')
       const params = new URLSearchParams({
         client_id: clientId,
         redirect_uri: location.origin + location.pathname,
@@ -64,7 +66,7 @@ export default function StravaPanel() {
       })
       location.href = `https://www.strava.com/oauth/authorize?${params}`
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Falha ao iniciar conexão')
+      setError(errorText(e, t, 'err.connectFailed'))
     }
   }
 
@@ -72,7 +74,7 @@ export default function StravaPanel() {
 
   /** Devolve access_token válido, renovando se expirou. */
   const freshToken = async (): Promise<string> => {
-    if (!token) throw new Error('Conecte com o Strava primeiro')
+    if (!token) throw new Error('err.connectFirst')
     if (token.expires_at * 1000 > Date.now() + 60_000) return token.access_token
     const t = await tokenRequest({ refresh_token: token.refresh_token })
     saveToken(t); setToken(t)
@@ -83,8 +85,8 @@ export default function StravaPanel() {
     return (
       <section className="card">
         <h2>Strava</h2>
-        <p className="hint">Conecte pra importar suas atividades, rotas salvas e segmentos da comunidade.</p>
-        <button className="btn strava" style={{ marginTop: 10 }} onClick={connect}>Conectar com Strava</button>
+        <p className="hint">{t('strava.hint')}</p>
+        <button className="btn strava" style={{ marginTop: 10 }} onClick={connect}>{t('strava.connect')}</button>
         {error && <p className="error" role="alert">{error}</p>}
       </section>
     )
@@ -94,7 +96,7 @@ export default function StravaPanel() {
     <section className="card">
       <h2>Strava{token.athlete?.firstname ? ` · ${token.athlete.firstname}` : ''}</h2>
       <Connected freshToken={freshToken} athleteId={token.athlete?.id} />
-      <button className="btn" style={{ marginTop: 10 }} onClick={disconnect}>Desconectar</button>
+      <button className="btn" style={{ marginTop: 10 }} onClick={disconnect}>{t('strava.disconnect')}</button>
     </section>
   )
 }
@@ -116,15 +118,18 @@ function shapeFor(r: ImportResult): Trace | null {
 
 /** Acrescenta o cruzamento sem tocar no resto do quadro, substituindo uma versão anterior dele. */
 function withCross(els: StatElement[], cross: StatSeed): StatElement[] {
-  const rest = els.filter(e => e.label !== cross.label)
+  // Pela chave, não pelo texto: o rótulo muda de idioma, a chave não.
+  const rest = els.filter(e => e.key !== cross.key)
   const [x, y] = STAT_SLOTS[Math.min(rest.length, STAT_SLOTS.length - 1)]
-  return [...rest, newStat(cross.label, cross.value, x, y)]
+  return [...rest, newStat(cross.label, cross.value, x, y, cross.key)]
 }
 
 function useApplyImport() {
   const setRoute = useSetAtom(routeAtom)
   const setElements = useSetAtom(elementsAtom)
   const [imports, setImports] = useAtom(importsAtom)
+  const lang = useLang()
+  const t = useT()
 
   return (r: ImportResult, mode: ApplyMode) => {
     if (mode !== 'stats') {
@@ -136,7 +141,7 @@ function useApplyImport() {
     // Guarda por tipo pra cruzar previsto (rota) com feito (atividade), em qualquer ordem de importação.
     const next = { ...imports, [r.kind]: r }
     setImports(next)
-    const cross = plannedVsActual(next.route, next.activity)
+    const cross = plannedVsActual(next.route, next.activity, t)
 
     // Só o traçado não mexe nos números, mas pode ter destravado o cruzamento: ele entra como dado novo.
     if (mode === 'shape') {
@@ -144,23 +149,25 @@ function useApplyImport() {
       return
     }
 
-    const seeds = statsFor(r)
+    const seeds = statsFor(r, lang, t)
     if (cross) seeds.push(cross)
     setElements(
-      seeds.slice(0, STAT_SLOTS.length).map((s, i) => newStat(s.label, s.value, STAT_SLOTS[i][0], STAT_SLOTS[i][1])),
+      seeds.slice(0, STAT_SLOTS.length).map((s, i) => newStat(s.label, s.value, STAT_SLOTS[i][0], STAT_SLOTS[i][1], s.key)),
     )
   }
 }
 
 function Connected({ freshToken, athleteId }: { freshToken: () => Promise<string>; athleteId?: number }) {
   const apply = useApplyImport()
+  const t = useT()
+  const lang = useLang()
   const route = useAtomValue(routeAtom)
   const elements = useAtomValue(elementsAtom)
   const [link, setLink] = useState('')
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
   const [options, setOptions] = useState<ImportResult[]>([])
-  const [optionsLabel, setOptionsLabel] = useState('')
+  const [optionsLabel, setOptionsLabel] = useState<Key>('strava.myRoutes')
   const [pending, setPending] = useState<ImportResult | null>(null)
 
   /** Quadro vazio não tem o que mesclar: importa direto. Caso contrário pergunta o que aproveitar. */
@@ -177,21 +184,21 @@ function Connected({ freshToken, athleteId }: { freshToken: () => Promise<string
 
   const run = async (what: string, fn: () => Promise<void>) => {
     setBusy(what); setError(''); setOptions([]); setPending(null)
-    try { await fn() } catch (e) { setError(e instanceof Error ? e.message : 'Deu erro') } finally { setBusy('') }
+    try { await fn() } catch (e) { setError(errorText(e, t)) } finally { setBusy('') }
   }
 
   const importLink = () => run('link', async () => {
     const ref = parseActivityUrl(link)
-    if (!ref) throw new Error('Cole o link da atividade ou o link curto de compartilhar')
+    if (!ref) throw new Error('err.badLink')
     const id = ref.kind === 'id' ? ref.id : await resolveShortLink(ref.url)
     offer(await getActivity(id, await freshToken()))
   })
 
   const loadRoutes = () => run('routes', async () => {
-    if (!athleteId) throw new Error('Conta sem identificador. Conecte de novo')
+    if (!athleteId) throw new Error('err.noAthlete')
     const routes = await listRoutes(athleteId, await freshToken())
-    if (routes.length === 0) throw new Error('Nenhuma rota salva na sua conta')
-    setOptions(routes); setOptionsLabel('Minhas rotas')
+    if (routes.length === 0) throw new Error('err.noRoutes')
+    setOptions(routes); setOptionsLabel('strava.myRoutes')
   })
 
   const [segPlace, setSegPlace] = useState<Place | null>(null)
@@ -200,67 +207,65 @@ function Connected({ freshToken, athleteId }: { freshToken: () => Promise<string
     let place = segPlace
     if (!place) {
       const results = await searchPlaces(segQuery)
-      if (results.length === 0) throw new Error('Local não encontrado')
+      if (results.length === 0) throw new Error('err.placeNotFound')
       place = results[0]
       setSegPlace(place)
     }
     const segs = await exploreSegments(place.lat, place.lon, await freshToken())
-    if (segs.length === 0) throw new Error('Nenhum segmento de corrida nessa região')
-    setOptions(segs); setOptionsLabel('Segmentos da região')
+    if (segs.length === 0) throw new Error('err.noSegments')
+    setOptions(segs); setOptionsLabel('strava.segments')
   })
 
   return (
     <div>
       <div className="field">
-        <label htmlFor="strava-link">Link da atividade</label>
+        <label htmlFor="strava-link">{t('strava.linkLabel')}</label>
         <input id="strava-link" type="text" inputMode="url" value={link}
           placeholder="strava.com/activities/… ou strava.app.link/…"
           onChange={e => setLink(e.target.value)} />
       </div>
       <div className="row">
         <button className="btn" disabled={!link || !!busy} onClick={importLink}>
-          {busy === 'link' ? 'Importando…' : 'Importar atividade'}
+          {busy === 'link' ? t('strava.importing') : t('strava.import')}
         </button>
         <button className="btn" disabled={!!busy} onClick={loadRoutes}>
-          {busy === 'routes' ? 'Buscando…' : 'Minhas rotas'}
+          {busy === 'routes' ? t('strava.searching') : t('strava.myRoutes')}
         </button>
       </div>
       <div className="field" style={{ marginTop: 12 }}>
-        <label htmlFor="seg-place">Segmentos perto de um local</label>
+        <label htmlFor="seg-place">{t('strava.segLabel')}</label>
         <div className="row">
-          <input id="seg-place" type="search" value={segQuery} placeholder="Ex.: Gruta do Janelão"
+          <input id="seg-place" type="search" value={segQuery} placeholder={t('strava.segPlaceholder')}
             onChange={e => { setSegQuery(e.target.value); setSegPlace(null) }} style={{ flex: 1 }} />
           <button className="btn" disabled={segQuery.length < 3 || !!busy} onClick={findSegments}>
-            {busy === 'segments' ? 'Buscando…' : 'Buscar'}
+            {busy === 'segments' ? t('strava.searching') : t('strava.search')}
           </button>
         </div>
       </div>
       {pending && (
         <div className="field" style={{ marginTop: 12 }}>
-          <label>{pending.name} · {formatDistance(pending.distanceM)}</label>
+          <label>{pending.name} · {formatDistance(pending.distanceM, lang)}</label>
           <div className="row">
-            <button className="btn" onClick={() => resolve('all')}>Substituir tudo</button>
-            <button className="btn" onClick={() => resolve('shape')}>Só o traçado</button>
-            <button className="btn" onClick={() => resolve('stats')}>Só os números</button>
-            <button className="btn" onClick={() => setPending(null)}>Cancelar</button>
+            <button className="btn" onClick={() => resolve('all')}>{t('merge.all')}</button>
+            <button className="btn" onClick={() => resolve('shape')}>{t('merge.shape')}</button>
+            <button className="btn" onClick={() => resolve('stats')}>{t('merge.stats')}</button>
+            <button className="btn" onClick={() => setPending(null)}>{t('merge.cancel')}</button>
           </div>
           <p className="hint">
-            {pending.points.length === 0
-              ? shapeFor(pending)
-                ? `Essa atividade não tem traçado, então entra a forma da modalidade no lugar.`
-                : `Essa atividade não tem traçado. Use "Só os números" e escolha a forma na aba Rota.`
-              : 'Pra juntar os dois: importe a atividade e depois a rota com "Só o traçado". O desenho fica o da rota planejada e os números seguem os da sua atividade.'}
+            {t(pending.points.length === 0
+              ? shapeFor(pending) ? 'merge.hintShape' : 'merge.hintNoShape'
+              : 'merge.hintBoth')}
           </p>
         </div>
       )}
       {options.length > 0 && (
         <div className="field">
-          <label>{optionsLabel}</label>
+          <label>{t(optionsLabel)}</label>
           <ul className="suggest">
             {options.map((o, i) => (
               <li key={i}>
                 <button onClick={() => offer(o)}>
-                  {o.name} · {formatDistance(o.distanceM)}
+                  {o.name} · {formatDistance(o.distanceM, lang)}
                 </button>
               </li>
             ))}

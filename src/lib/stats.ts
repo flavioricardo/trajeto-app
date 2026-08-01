@@ -1,19 +1,28 @@
 import { ImportResult } from './strava'
+import { Key, Lang, T } from '../i18n'
 import { formatDistance, formatDuration, formatPace, formatSpeed, formatSwimPace, formatDelta } from './format'
 
-export type StatSeed = { label: string; value: string }
+/**
+ * O `key` viaja junto com o rótulo: é ele que permite reescrever o texto quando
+ * o idioma muda, sem atropelar o que o usuário renomeou na mão.
+ */
+export type StatSeed = { key: Key; label: string; value: string }
 
 /** Modalidades onde o ritmo se lê em km/h, não em minutos por quilômetro. */
 const POR_VELOCIDADE = /^(Ride|VirtualRide|MountainBikeRide|GravelRide|EBikeRide|Velomobile|Handcycle|Skateboard|InlineSkate|AlpineSki|Snowboard|Kitesurf|Windsurf|Sail)$/
 
+const seed = (key: Key, value: string, t: T): StatSeed => ({ key, label: t(key), value })
+
 /** Ritmo no formato que a modalidade usa. */
-function ritmo(r: ImportResult, time: number): StatSeed | null {
+function ritmo(r: ImportResult, time: number, real: boolean, lang: Lang, t: T): StatSeed | null {
   if (!r.distanceM) return null
-  if (r.sportType === 'Swim') return { label: 'Pace', value: formatSwimPace(r.distanceM, time) }
-  if (r.sportType && POR_VELOCIDADE.test(r.sportType)) {
-    return { label: 'Velocidade', value: formatSpeed(r.distanceM, time) }
+  if (r.sportType === 'Swim') {
+    return seed(real ? 'stat.pace' : 'stat.paceEstimated', formatSwimPace(r.distanceM, time), t)
   }
-  return { label: 'Pace', value: formatPace(r.distanceM, time) }
+  if (r.sportType && POR_VELOCIDADE.test(r.sportType)) {
+    return seed(real ? 'stat.speed' : 'stat.speedEstimated', formatSpeed(r.distanceM, time, lang), t)
+  }
+  return seed(real ? 'stat.pace' : 'stat.paceEstimated', formatPace(r.distanceM, time), t)
 }
 
 /**
@@ -23,24 +32,24 @@ function ritmo(r: ImportResult, time: number): StatSeed | null {
  * não têm distância, indoor não tem elevação, e só quem usa cinta tem frequência.
  * Emitir zero seria pior que omitir.
  */
-export function statsFor(r: ImportResult): StatSeed[] {
+export function statsFor(r: ImportResult, lang: Lang, t: T): StatSeed[] {
   const time = r.durationS ?? r.estimatedS
   const real = r.durationS != null
   const out: StatSeed[] = []
 
-  if (r.distanceM) out.push({ label: 'Distância', value: formatDistance(r.distanceM) })
-  if (time) out.push({ label: real ? 'Tempo' : 'Tempo previsto', value: formatDuration(time) })
+  if (r.distanceM) out.push(seed('stat.distance', formatDistance(r.distanceM, lang), t))
+  if (time) out.push(seed(real ? 'stat.time' : 'stat.timeEstimated', formatDuration(time), t))
   if (time) {
-    const ritmoSeed = ritmo(r, time)
-    if (ritmoSeed) out.push(real ? ritmoSeed : { ...ritmoSeed, label: `${ritmoSeed.label} previsto` })
+    const ritmoSeed = ritmo(r, time, real, lang, t)
+    if (ritmoSeed) out.push(ritmoSeed)
   }
-  if (r.gainM) out.push({ label: 'Elevação', value: `${Math.round(r.gainM)} m` })
-  if (r.hrAvg) out.push({ label: 'FC média', value: `${Math.round(r.hrAvg)} bpm` })
-  if (r.calories) out.push({ label: 'Calorias', value: `${Math.round(r.calories)} kcal` })
-  if (r.effort) out.push({ label: 'Esforço', value: String(Math.round(r.effort)) })
-  if (r.hrMax) out.push({ label: 'FC máxima', value: `${Math.round(r.hrMax)} bpm` })
-  if (r.wattsAvg) out.push({ label: 'Potência', value: `${Math.round(r.wattsAvg)} W` })
-  if (r.cadenceAvg) out.push({ label: 'Cadência', value: `${Math.round(r.cadenceAvg)} rpm` })
+  if (r.gainM) out.push(seed('stat.elevation', `${Math.round(r.gainM)} m`, t))
+  if (r.hrAvg) out.push(seed('stat.hrAvg', `${Math.round(r.hrAvg)} bpm`, t))
+  if (r.calories) out.push(seed('stat.calories', `${Math.round(r.calories)} kcal`, t))
+  if (r.effort) out.push(seed('stat.effort', String(Math.round(r.effort)), t))
+  if (r.hrMax) out.push(seed('stat.hrMax', `${Math.round(r.hrMax)} bpm`, t))
+  if (r.wattsAvg) out.push(seed('stat.power', `${Math.round(r.wattsAvg)} W`, t))
+  if (r.cadenceAvg) out.push(seed('stat.cadence', `${Math.round(r.cadenceAvg)} rpm`, t))
 
   return out
 }
@@ -49,7 +58,7 @@ export function statsFor(r: ImportResult): StatSeed[] {
  * O cruzamento: previsto pela rota contra feito na atividade.
  * Devolve null quando falta um dos dois lados.
  */
-export function plannedVsActual(route?: ImportResult | null, activity?: ImportResult | null): StatSeed | null {
+export function plannedVsActual(route: ImportResult | null | undefined, activity: ImportResult | null | undefined, t: T): StatSeed | null {
   if (!route?.estimatedS || !activity?.durationS) return null
-  return { label: 'vs. previsto', value: formatDelta(route.estimatedS, activity.durationS) }
+  return seed('stat.vsPlanned', formatDelta(route.estimatedS, activity.durationS, t), t)
 }

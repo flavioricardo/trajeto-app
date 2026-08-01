@@ -16,5 +16,6 @@ it('parse extrai pontos e stats', () => {
 })
 
 it('gpx sem trkpt lanca erro', () => {
-  expect(() => parseGpx('<gpx></gpx>')).toThrow('GPX sem trackpoints')
+  // a biblioteca lança a chave; quem mostra é que traduz
+  expect(() => parseGpx('<gpx></gpx>')).toThrow('err.gpxNoPoints')
 })
