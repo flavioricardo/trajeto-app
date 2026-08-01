@@ -4,6 +4,8 @@
   --paper: #edefec;
   --ink: #17201b;
   --accent: #ff4d12;
+  /* mesmo laranja, fundo o bastante pra segurar texto branco em 4,7:1 */
+  --accent-deep: #d63a00;
   --contour: #c9cfc7;
   --moss: #5e6b5f;
   --card: #ffffff;
@@ -17,7 +19,6 @@ body {
   background: var(--paper);
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
-  padding-bottom: calc(84px + env(safe-area-inset-bottom));
 }
 
 /* ---------- header: assinatura topográfica ---------- */
@@ -109,6 +110,7 @@ body {
 .route-box { touch-action: none; }
 /* Só o traçado, que é filho direto. Descendente pegaria os ícones das alças e os esticaria. */
 .route-box > svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.route-box .resize:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .route-box .resize {
   position: absolute;
   right: -8px;
@@ -138,10 +140,11 @@ body {
 .stat [contenteditable] { outline: none; min-width: 2ch; }
 .stat [contenteditable]:focus { border-bottom: 1px dashed currentColor; user-select: text; }
 /* Controles do canvas: fechar e arrastar, nos cantos de cima do bloco. */
+/* 24px é o mínimo da WCAG 2.2 pra alvo de toque; 22 ficava abaixo. */
 .stat .remove, .stat .grab, .route-box .grab {
   position: absolute;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   padding: 0; /* botão traz padding próprio e desloca o ícone do centro */
   border-radius: 50%;
   border: none;
@@ -154,7 +157,7 @@ body {
 /* No bloco de dado os controles ficam acima, não sobre a quina: o texto começa
    na quina e um badge ali comeria a primeira letra. Padding no bloco não serve,
    porque o export desenha o texto na coordenada exata e sairia deslocado. */
-.stat .grab, .stat .remove { top: -26px; }
+.stat .grab, .stat .remove { top: -28px; }
 .stat .grab { left: 0; cursor: grab; }
 .stat .remove { right: 0; }
 /* Na rota a quina é vazia, então o badge pode montar nela. */
@@ -298,7 +301,20 @@ select { padding: 9px 10px; border-radius: 10px; border: 1px solid var(--contour
   background: transparent;
   color: var(--ink);
 }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+/*
+ * Branco sobre o laranja da marca dá 3,3:1, abaixo dos 4,5:1 que a WCAG pede
+ * pra texto normal. O botão usa uma versão mais funda do mesmo laranja, que
+ * passa em 4,7:1; a marca segue com o tom original no logo e nas guias.
+ * Aumentar a letra também resolveria, mas a 360px isso quebra a barra em duas
+ * linhas e o último painel some atrás dela.
+ */
+.btn.primary { background: var(--accent-deep); border-color: var(--accent-deep); color: #fff; }
+/*
+ * O laranja do Strava é da marca deles e não dá pra mexer. Aqui a saída é a
+ * outra: >=18,66px em 700 conta como texto grande, que pede só 3:1. O botão
+ * está sozinho no painel, então crescer não desarruma nada.
+ */
+.btn.strava { font-size: 19px; font-weight: 700; }
 /* Botão de conexão segue a cor oficial do Strava (exigência das brand guidelines) */
 .btn.strava { background: #fc4c02; border-color: #fc4c02; color: #fff; }
 .btn:disabled { opacity: 0.5; }
@@ -331,10 +347,16 @@ select { padding: 9px 10px; border-radius: 10px; border: 1px solid var(--contour
 .hint { color: var(--moss); font-size: 12px; margin: 6px 0 0; }
 
 /* ---------- barra fixa de export ---------- */
+/*
+ * Grudada embaixo, mas ocupando lugar de verdade.
+ *
+ * Com `fixed` era preciso reservar espaço no body com um número fixo, e ele
+ * errava: abaixo de 380px a barra quebra em duas linhas, passa de 84 pra 111px
+ * e come o último painel. `sticky` reserva a própria altura, então vale pra
+ * qualquer altura que a barra venha a ter — inclusive em outro idioma.
+ */
 .export-bar {
-  position: fixed;
-  left: 0;
-  right: 0;
+  position: sticky;
   bottom: 0;
   display: flex;
   gap: 10px;

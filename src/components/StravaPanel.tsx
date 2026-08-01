@@ -17,6 +17,22 @@ import { useT, useLang, errorText, Key, T, Lang } from '../i18n'
 // do Strava quem já autorizou, e ela não aparece pra ninguém.
 const STORAGE_KEY = 'trajeto_strava'
 
+/**
+ * Chave anti-CSRF do OAuth.
+ *
+ * Sem ela, um link montado por terceiro faz o navegador da vítima completar o
+ * fluxo com o `code` de quem montou — e a aba passa a falar com a conta Strava
+ * do atacante em vez da própria. O valor é sorteado, guardado só nesta aba e
+ * conferido na volta.
+ */
+const STATE_KEY = 'storyline_oauth_state'
+
+const novoState = () => {
+  const b = new Uint8Array(16)
+  crypto.getRandomValues(b)
+  return [...b].map(n => n.toString(16).padStart(2, '0')).join('')
+}
+
 function loadToken(): StravaToken | null {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null') } catch { return null }
 }
@@ -44,9 +60,17 @@ export default function StravaPanel() {
 
   // Callback do OAuth: ?code= na URL
   useEffect(() => {
-    const code = new URLSearchParams(location.search).get('code')
+    const params = new URLSearchParams(location.search)
+    const code = params.get('code')
     if (!code) return
     history.replaceState(null, '', location.pathname)
+
+    const esperado = sessionStorage.getItem(STATE_KEY)
+    sessionStorage.removeItem(STATE_KEY)
+    if (!esperado || params.get('state') !== esperado) {
+      setError(t('err.stravaState'))
+      return
+    }
     tokenRequest({ code })
       .then(t => { saveToken(t); setToken(t) })
       .catch(e => setError(errorText(e, t)))
@@ -57,12 +81,15 @@ export default function StravaPanel() {
     try {
       const { clientId } = await (await fetch('/api/strava-config')).json()
       if (!clientId) throw new Error('err.stravaConfig')
+      const state = novoState()
+      sessionStorage.setItem(STATE_KEY, state)
       const params = new URLSearchParams({
         client_id: clientId,
         redirect_uri: location.origin + location.pathname,
         response_type: 'code',
         scope: 'read,activity:read',
         approval_prompt: 'auto',
+        state,
       })
       location.href = `https://www.strava.com/oauth/authorize?${params}`
     } catch (e) {

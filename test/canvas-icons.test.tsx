@@ -58,6 +58,6 @@ it('o fechar é mesmo o X do Feather, na geometria original', () => {
 it('a alça de arrastar não é anunciada como controle operável', () => {
   renderWithRoute()
   expect(document.querySelector('.stat .grab')?.getAttribute('aria-hidden')).toBe('true')
-  // o bloco em si segue focável e rotulado
-  expect(screen.getByLabelText('Rota. Arraste pra mover')).toBeTruthy()
+  // o bloco em si segue focável e rotulado, e o rótulo agora diz a tecla
+  expect(screen.getByLabelText('Rota. Use as setas pra mover')).toBeTruthy()
 })

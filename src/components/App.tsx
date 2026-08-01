@@ -286,7 +286,7 @@ function ExportBar() {
   }
 
   return (
-    <div className="export-bar">
+    <footer className="export-bar">
       <div className="preset-toggle" role="group" aria-label={t('export.format')}>
         {(Object.keys(PRESETS) as Preset[]).map(p => (
           <button key={p} aria-pressed={preset === p} onClick={() => setPreset(p)}>
@@ -298,6 +298,6 @@ function ExportBar() {
         {busy ? t('export.busy') : <><IconDownload size={15} /> {t('export.save')} {photo && comFoto ? 'JPG' : 'PNG'}</>}
       </button>
       {erro && <p className="error export-error" role="alert">{erro}</p>}
-    </div>
+    </footer>
   )
 }

@@ -142,8 +142,9 @@ const STRINGS = {
     'Escolha o que vai no quadro nas abas abaixo. Depois arraste cada item pra posicionar.',
     'Pick what goes on the canvas in the tabs below. Then drag each item to place it.',
   ],
-  'canvas.routeAria': ['Rota. Arraste pra mover', 'Route. Drag to move'],
-  'canvas.resizeAria': ['Redimensionar rota', 'Resize route'],
+  'canvas.routeAria': ['Rota. Use as setas pra mover', 'Route. Use the arrow keys to move'],
+  'canvas.moveAria': ['Use as setas pra mover', 'Use the arrow keys to move'],
+  'canvas.resizeAria': ['Tamanho da rota', 'Route size'],
   'canvas.remove': ['Remover', 'Remove'],
 
   // Rótulos de estatística. Também vão pra imagem exportada.
@@ -204,6 +205,10 @@ const STRINGS = {
   'err.stravaNotFound': ['Não encontrado. A atividade é sua e está visível?', 'Not found. Is the activity yours and visible?'],
   'err.strava': ['O Strava respondeu com erro', 'Strava responded with an error'],
   'err.stravaShortLink': ['Não deu pra abrir esse link curto', 'Could not open that short link'],
+  'err.stravaState': [
+    'A volta do Strava não confere com o pedido que saiu daqui. Comece a conexão de novo.',
+    'The response from Strava does not match the request this tab started. Connect again.',
+  ],
   'err.stravaConfig': ['Integração com o Strava ainda não configurada neste servidor', 'Strava integration is not set up on this server yet'],
   'err.connectFailed': ['Falha ao iniciar conexão', 'Could not start the connection'],
   'err.connectFirst': ['Conecte com o Strava primeiro', 'Connect with Strava first'],

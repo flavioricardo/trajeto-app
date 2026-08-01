@@ -185,6 +185,33 @@ Avaliação a pedido do Flávio. A direção topográfica (papel, tinta, laranja
 - **Copy junto:** o campo de arquivo dizia a mesma coisa três vezes (título, botão genérico, "nenhum arquivo escolhido"). Agora o botão é o rótulo e o nome do arquivo só aparece depois de escolhido, que é quando ele informa algo.
 - 113 testes, bundle 82,1 → 82,4 kB gzip.
 
+## Sessão 12 (cont.) — auditoria de acessibilidade, segurança e performance
+
+### Acessibilidade
+
+- **O quadro era só do mouse.** Dava pra focar cada item pelo teclado e não dava pra mover nenhum — posicionar é a interação central do app. Falha de WCAG 2.1.1 nível A. O **axe não pega**, porque o elemento é focável e tem nome. Setas movem (Shift anda 5), e o controle de tamanho virou slider de verdade: entrou no tab, ganhou `aria-valuemin/max` e responde a setas, Home e End.
+  - Sem encaixe no teclado, de propósito: o passo é menor que o limiar das guias, então o ímã prenderia o item no alvo — o mesmo problema que o arrasto resolve guardando a posição livre à parte.
+  - A tecla só vale com o foco no bloco. Dentro dele há texto editável, e lá as setas são do cursor.
+  - Coberto por `test/keyboard.test.tsx`, que é o tipo de coisa que regride calada.
+- **Contraste do botão principal**: branco sobre `#FF4D12` dá 3,3:1, abaixo dos 4,5:1. Entrou `--accent-deep` (`#D63A00`, 4,7:1) só no fundo do botão; a marca segue com o laranja original no logo e nas guias. O botão do Strava não podia mudar de cor — é marca deles — então foi pelo outro caminho: ≥18,66px em 700 conta como texto grande e a exigência cai pra 3:1.
+- **Barra de exportação virou `sticky`.** Era `fixed` com espaço reservado por um `padding-bottom` fixo de 84px no body, e abaixo de 380px ela quebra em duas linhas, vai pra 111px e **come o último painel**. `sticky` reserva a própria altura, então vale pra qualquer altura — inclusive em outro idioma. Também virou `<footer>`, que resolve o único outro achado do axe (conteúdo fora de landmark).
+- Alvo de toque das alças subiu de 22 pra 24px, que é o mínimo da WCAG 2.2.
+- **axe-core: 0 violações** depois, contra 2 antes. Rodado com uma forma no quadro, que é o estado real de uso.
+
+### Segurança
+
+- **OAuth sem `state`.** Um link montado por terceiro fazia o navegador da vítima completar o fluxo com o `code` de quem montou, e a aba passava a falar com a conta Strava do atacante. Agora sorteia um valor por conexão, guarda em `sessionStorage` e confere na volta.
+- **Cabeçalhos**: entrou `vercel.json` com CSP, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` e `Cross-Origin-Opener-Policy`. A CSP é a mitigação real do token do Strava morar em `localStorage`: sem XSS, não tem como lê-lo.
+  - **A CSP foi testada contra o build de produção**, servido por um servidor local com os mesmos cabeçalhos, exercitando carga, escolha de forma, exportação com download (`blob:`) e foto de fundo (object URL). Zero violações. CSP errada quebra o app em produção e não dá aviso — vale repetir esse teste ao mexer nela.
+  - `frame-ancestors 'none'` fecha clickjacking no botão de conectar.
+
+### Performance — o que parecia problema e não era
+
+- **Fontes: 1,5 MB no catálogo, 2 arquivos na prática.** São 9 famílias e 45 arquivos no `<link>`, mas `unicode-range` e carregamento sob demanda fazem o navegador buscar só Archivo e Archivo Black no primeiro carregamento. Medido interceptando `fonts.gstatic.com`. Sobra o CSS de 29 kB que bloqueia render; separar as fontes de overlay exigiria injetar `<link>` por JS (a CSP proíbe `onload` inline) e economizaria pouco. **Não vale.**
+- Bundle 246 kB bruto / 83 kB gzip, num app React com 22 formas vetorizadas embutidas. Sem gordura óbvia.
+- Arrasto no tema mais pesado (5 camadas, traçado de 1,5 kB de `d`) fica dentro do orçamento de um quadro. A medida é limitada pelo overhead do Playwright, então serve pra descartar lentidão patológica, não pra afirmar 60fps.
+- 119 testes, bundle 82,4 → 83,0 kB gzip.
+
 ## Pendências
 
 - [x] Revisar spec de design — resolvido 2026-07-23 (aprovação delegada, session 2)
