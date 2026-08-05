@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+  <!-- A rota, sem palavra: em 16px não cabe letra. Fundo papel porque a aba
+       pode ser clara ou escura, e o laranja sozinho some na clara. -->
+  <rect width="180" height="180" rx="38" fill="#edefec"/>
+  <path d="M 26 120 C 50 58 80 50 100 84 S 132 142 156 94"
+        fill="none" stroke="#ff4d12" stroke-width="26"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

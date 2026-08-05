@@ -1,6 +1,6 @@
 # STATE — Storyline (repo `trajeto-app`)
 
-**Última sessão:** 2026-07-31 (session 12)
+**Última sessão:** 2026-08-05 (session 13)
 
 ## Estado atual
 
@@ -212,6 +212,24 @@ Avaliação a pedido do Flávio. A direção topográfica (papel, tinta, laranja
 - Arrasto no tema mais pesado (5 camadas, traçado de 1,5 kB de `d`) fica dentro do orçamento de um quadro. A medida é limitada pelo overhead do Playwright, então serve pra descartar lentidão patológica, não pra afirmar 60fps.
 - 119 testes, bundle 82,4 → 83,0 kB gzip.
 
+## Sessão 13 (2026-08-05) — domínio próprio e prévia de link
+
+- **O app mora em `https://storyline.fmeira.dev/`.** O projeto na Vercel foi renomeado de `trajeto-app` pra `storyline` (`prj_O5el2XM4FuuOlc9X4VbN28kPDZOE`) e ganhou domínio próprio. **Isso revoga a decisão da session 12** de manter domínio e projeto como estavam — a razão de manter era não quebrar o OAuth, e o Flávio fez a troca junto com o Authorization Callback Domain, que é o que a decisão pedia. O `trajeto-app-fmeira.vercel.app` não respondeu mais.
+- **O repo continua `trajeto-app` de propósito**, e a chave `trajeto_strava` do localStorage também: renomear desconectaria quem já autorizou.
+- **Estado conferido por fora, não por memória:** produção é `dpl_Fd1gPZiu…` (main, `86d51d1`, READY), `ssoProtection.enabled = false`, e os cabeçalhos de segurança da session 12 chegam no domínio novo. `curl` e `WebFetch` seguem levando 403 no túnel; quem alcança é o `web_fetch_vercel_url`.
+- **`/api/strava-config` devolve `{"clientId":"267503"}`.** A pendência que ficou aberta da session 4 à 8 tinha sido fechada pela palavra do Flávio; agora está verificada.
+
+### Prévia de link e ícone
+
+- O `index.html` não tinha favicon nem Open Graph. O produto inteiro é sobre compartilhar imagem, e o link dele aparecia vazio em DM e story — mais visível ainda com domínio próprio novo.
+- **`scripts/gen-og.mjs` gera `public/og.png` e `public/apple-touch-icon.png`** (Chromium, como o `gen-shapes.mjs`; o playwright fica fora do `package.json` pelo mesmo motivo). Rede social não rasteriza SVG em `og:image`, então tem que sair PNG — e como o cartão repete a marca e as curvas de nível do header, gerar é o que mantém os dois iguais quando um mudar.
+  - **As fontes entram embutidas como data URI.** O Chromium desta caixa não alcança `fonts.googleapis.com`, mas o `fetch` do node alcança o gstatic — mesmo contorno que a session 12 usou pra ver a Rubik Doodle Shadow. Sem embutir, o cartão sairia na fonte de sistema.
+  - **O traço é amostrado e sacudido**, não uma curva limpa: curva limpa lê como onda de enfeite, e o que o app entrega é trajeto gravado. O ruído é semeado, senão o PNG mudava a cada regeração.
+- **As meta tags ficam em pt-BR e não acompanham a troca de idioma**, de propósito: quem lê é o robô da rede social, que não roda o JS que reescreve o título. Confirmado no teste — o `document.title` virou inglês pelo locale da máquina enquanto o `og:title` seguiu em português.
+- Só `twitter:card` foi declarado: o X lê `og:title`/`og:description`/`og:image` quando não há equivalente `twitter:`.
+- **CSP retestada contra o build**, como a session 12 mandou fazer sempre que mexer no que é servido: os três assets novos carregam, zero violação. A única falha de rede é o `fonts.googleapis.com`, que é o proxy do sandbox e já estava registrado.
+- 119 testes, bundle 83,0 kB gzip (inalterado — nada disso entra no bundle).
+
 ## Pendências
 
 - [x] Revisar spec de design — resolvido 2026-07-23 (aprovação delegada, session 2)
@@ -228,3 +246,7 @@ Avaliação a pedido do Flávio. A direção topográfica (papel, tinta, laranja
       | Depois de gravar: as env vars só valem no deploy seguinte. Com o Git conectado, qualquer push em main já republica.
       | Como validar: abrir https://trajeto-app-fmeira.vercel.app/api/strava-config — tem que vir um número no `clientId`. `null` = ausente ou não numérico (o guard rejeita).
       | Encerrada 2026-07-30 (session 8) pelo Flávio: "está tudo certo, integração com o Strava funcionando". Fechada pela confirmação dele, não por verificação minha. Aberta desde 2026-07-24 (session 4), 4 sessões.
+      | **Verificada 2026-08-05 (session 13):** `/api/strava-config` devolve `{"clientId":"267503"}` no domínio novo.
+- [x] Apontar o Authorization Callback Domain do Strava pra `storyline.fmeira.dev` — https://www.strava.com/settings/api — resolvido 2026-08-05 (session 13) pelo Flávio, junto com a troca de domínio. O `redirect_uri` sai de `location.origin + location.pathname` (`StravaPanel.tsx`), então trocar o domínio sem trocar isto recusaria todo OAuth. Nasceu e morreu na mesma sessão.
+
+**Nenhuma pendência aberta.**
