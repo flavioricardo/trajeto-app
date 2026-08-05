@@ -230,6 +230,7 @@ Avaliação a pedido do Flávio. A direção topográfica (papel, tinta, laranja
 - **CSP retestada contra o build**, como a session 12 mandou fazer sempre que mexer no que é servido: os três assets novos carregam, zero violação. A única falha de rede é o `fonts.googleapis.com`, que é o proxy do sandbox e já estava registrado.
 - 119 testes, bundle 83,0 kB gzip (inalterado — nada disso entra no bundle).
 - **Produção verificada depois do merge:** `dpl_EyNs8CjYfdFQbrCshiM33GxtNtF2` (main, `a664b1f`, READY). `storyline.fmeira.dev` serve `/favicon.svg` em `image/svg+xml`, `/og.png` em `image/png` e o HTML com as meta tags. Aliases hoje: `storyline.fmeira.dev`, `storyline-flavioricardo91.vercel.app`, `storyline-git-main-flavioricardo91.vercel.app` — os `trajeto-app-*` sumiram com o rename.
+- **Ícone confirmado na aba pelo Flávio** ("favicon apareceu"). Eu tinha verificado o arquivo e o `content-type`, não o desenho em 16px — o traço de 26 num viewBox de 180 segura o tamanho pequeno.
 - **Armadilha registrada:** o favicon deu 404 em produção enquanto o commit estava só no branch. Produção deploya do `main`, e este repo não tem deploy de branch aliasado no domínio — conferir asset novo em produção antes do merge sempre vai dar 404. Quem responde antes do merge é a URL de preview do push. E navegador guarda favicon com unha e dente: depois do deploy, aba nova ou recarga forçada.
 
 ## Pendências
