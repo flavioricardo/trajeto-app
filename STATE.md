@@ -216,7 +216,7 @@ Avaliação a pedido do Flávio. A direção topográfica (papel, tinta, laranja
 
 - **O app mora em `https://storyline.fmeira.dev/`.** O projeto na Vercel foi renomeado de `trajeto-app` pra `storyline` (`prj_O5el2XM4FuuOlc9X4VbN28kPDZOE`) e ganhou domínio próprio. **Isso revoga a decisão da session 12** de manter domínio e projeto como estavam — a razão de manter era não quebrar o OAuth, e o Flávio fez a troca junto com o Authorization Callback Domain, que é o que a decisão pedia. O `trajeto-app-fmeira.vercel.app` não respondeu mais.
 - **O repo continua `trajeto-app` de propósito**, e a chave `trajeto_strava` do localStorage também: renomear desconectaria quem já autorizou.
-- **Estado conferido por fora, não por memória:** produção é `dpl_Fd1gPZiu…` (main, `86d51d1`, READY), `ssoProtection.enabled = false`, e os cabeçalhos de segurança da session 12 chegam no domínio novo. `curl` e `WebFetch` seguem levando 403 no túnel; quem alcança é o `web_fetch_vercel_url`.
+- **Estado conferido por fora, não por memória:** `ssoProtection.enabled = false` e os cabeçalhos de segurança da session 12 chegam no domínio novo. `curl` e `WebFetch` seguem levando 403 no túnel; quem alcança é o `web_fetch_vercel_url`.
 - **`/api/strava-config` devolve `{"clientId":"267503"}`.** A pendência que ficou aberta da session 4 à 8 tinha sido fechada pela palavra do Flávio; agora está verificada.
 
 ### Prévia de link e ícone
@@ -229,6 +229,8 @@ Avaliação a pedido do Flávio. A direção topográfica (papel, tinta, laranja
 - Só `twitter:card` foi declarado: o X lê `og:title`/`og:description`/`og:image` quando não há equivalente `twitter:`.
 - **CSP retestada contra o build**, como a session 12 mandou fazer sempre que mexer no que é servido: os três assets novos carregam, zero violação. A única falha de rede é o `fonts.googleapis.com`, que é o proxy do sandbox e já estava registrado.
 - 119 testes, bundle 83,0 kB gzip (inalterado — nada disso entra no bundle).
+- **Produção verificada depois do merge:** `dpl_EyNs8CjYfdFQbrCshiM33GxtNtF2` (main, `a664b1f`, READY). `storyline.fmeira.dev` serve `/favicon.svg` em `image/svg+xml`, `/og.png` em `image/png` e o HTML com as meta tags. Aliases hoje: `storyline.fmeira.dev`, `storyline-flavioricardo91.vercel.app`, `storyline-git-main-flavioricardo91.vercel.app` — os `trajeto-app-*` sumiram com o rename.
+- **Armadilha registrada:** o favicon deu 404 em produção enquanto o commit estava só no branch. Produção deploya do `main`, e este repo não tem deploy de branch aliasado no domínio — conferir asset novo em produção antes do merge sempre vai dar 404. Quem responde antes do merge é a URL de preview do push. E navegador guarda favicon com unha e dente: depois do deploy, aba nova ou recarga forçada.
 
 ## Pendências
 
