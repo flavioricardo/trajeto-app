@@ -2,8 +2,8 @@
 # Enquanto a linha acima existir, scripts/rollout-base.sh sobrescreve este
 # arquivo com o template. Precisa ajustar pro projeto (env var no build etc.)?
 # Apague a linha "Origem" — vira CI próprio e o rollout não toca mais.
-# É o gate de verdade do fluxo PR → review → merge: ligar branch protection na
-# main exigindo o check "ci".
+# Check "ci" do fluxo PR → review → merge. Sem branch protection (plano Free),
+# quem barra merge vermelho é a regra base: conferir o check antes de mergear.
 name: CI
 on:
   push:
