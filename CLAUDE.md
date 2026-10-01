@@ -8,6 +8,6 @@
 - Feature nova: skill `brainstorming` antes de codar (spec/plano em `docs/superpowers/`). Bug: skill `systematic-debugging` antes de propor correção.
 - **Credencial** (token, senha, chave, JWT de sessão) colada no chat: não usar, avisar, e abrir pendência P1 de rotação no `STATE.md`. O hook `.claude/hooks/block-secrets.sh` já barra os formatos conhecidos.
 - Pendência que só o Flávio fecha (pessoa, painel, ação manual) leva a marca `[humano]` e não trava trabalho novo. Pendência técnica aberta há 2+ sessões trava: resolver antes de começar outra coisa.
-- Ícones: `lucide-react`. Marca (Google, Instagram, logo do produto) em SVG inline — Lucide 1.0 tirou os ícones de marca. Fora do padrão por decisão: `trajeto-app` e `grupo-telegram-desktop`.
+- Ícones: Lucide (`lucide-react` em projeto React). Marca (Google, Instagram, logo do produto) em SVG inline — Lucide 1.0 tirou os ícones de marca. Fora do padrão por decisão: `trajeto-app` e `grupo-telegram-desktop`.
 - Autoria: nunca e-mail corporativo em repo pessoal (a Vercel bloqueia o deploy com erro de permissão). Local: `git config user.email flaviobazana@gmail.com`.
 <!-- END:claude-config-base -->
